@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ecologist’s Pokédex</title>
+<style>
+:root{--bg:#f3f1ea;--card:#fff;--ink:#1d2a22;--mute:#6b776f;--line:#d9d6ca;--red:#c8372d;--green:#2f7d4f;--chip:#e8e5d9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--card:#1e2721;--ink:#e9efe9;--mute:#93a399;--line:#33403a;--red:#e0483d;--green:#4fae77;--chip:#27322b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a16;--card:#1e2721;--ink:#e9efe9;--mute:#93a399;--line:#33403a;--red:#e0483d;--green:#4fae77;--chip:#27322b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+header{background:var(--red);color:#fff;padding:12px 14px 0;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top{display:flex;align-items:center;gap:10px}
+.lens{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9fe0ff,#1d7bd1 60%,#0b3e75);border:3px solid #fff;flex:none}
+h1{font-size:1.1rem;margin:0;flex:1;letter-spacing:.02em}
+.count{font-size:.8rem;opacity:.9}
+.regions{display:flex;gap:6px;overflow-x:auto;padding:10px 0 10px;scrollbar-width:none}
+.regions::-webkit-scrollbar{display:none}
+.chip{border:0;background:rgba(255,255,255,.18);color:#fff;padding:7px 14px;border-radius:999px;font-size:.85rem;white-space:nowrap;cursor:pointer}
+.chip.on{background:#fff;color:var(--red);font-weight:700}
+.layout{display:flex;align-items:flex-start;max-width:1000px;margin:0 auto}
+nav{width:118px;flex:none;padding:12px 8px;position:sticky;top:150px;max-height:calc(100vh - 156px);overflow-y:auto}
+nav button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:8px;font-size:.88rem;cursor:pointer}
+nav button.on{background:var(--green);color:#fff;font-weight:600}
+nav .sub{padding-left:20px;font-size:.82rem;color:var(--mute)}
+nav .sub.on{color:#fff}
+nav .grp{font-weight:700;margin-top:4px}
+main{flex:1;padding:12px 10px 90px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,1fr);gap:16px}nav{width:170px}}
+.tile{cursor:pointer;background:none;border:0;padding:0;text-align:center;color:inherit;font:inherit}
+.pic{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--chip);border:2px solid var(--line)}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.num{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.62);color:#fff;font-weight:700;font-size:.8rem;padding:2px 8px;border-radius:8px}
+.nm{margin-top:6px;font-weight:600;font-size:.92rem;overflow-wrap:anywhere}
+.empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;line-height:1.5}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--red);color:#fff;border:0;border-radius:999px;padding:14px 22px;font-size:1rem;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;z-index:6}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px}
+@media (min-width:640px){.modal{align-items:center}.sheet{border-radius:18px}}
+.sheet h2{margin:0 0 12px;font-size:1.1rem}
+label{display:block;font-size:.8rem;color:var(--mute);margin:10px 0 4px}
+input[type=text],select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:600;font-size:.95rem;cursor:pointer;background:var(--chip);color:var(--ink)}
+.btn.p{background:var(--green);color:#fff}.btn.d{background:none;color:var(--red)}
+.preview{margin-top:10px;border-radius:12px;max-height:240px;width:100%;object-fit:cover;display:none}
+.actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.big{width:100%;border-radius:12px;display:block;margin-bottom:10px}
+.meta{color:var(--mute);font-size:.88rem;line-height:1.5}
+.latin{font-style:italic}
+input[type=date]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.srch{display:block;width:100%;margin:0 0 10px;padding:9px 16px;border-radius:999px;border:0;background:#fff;color:#1d2a22;font:inherit;font-size:.9rem}
+.warn{background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:.88rem;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sm{padding:6px 12px;font-size:.82rem}
+.locrow{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:8px}
+a{color:var(--green)}
+#hava{width:66px;height:44px;border-radius:12px;background:var(--chip);border:2px solid #fff;overflow:hidden;cursor:pointer;flex:none}
+#hava svg,#cprev svg{display:block;width:100%;height:auto}
+.sw{display:flex;flex-wrap:wrap;gap:6px}.sw i{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;display:block}.sw i.on{outline:3px solid var(--ink)}
+.frow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.grid.c2{grid-template-columns:repeat(2,1fr)}.grid.c3{grid-template-columns:repeat(3,1fr)}.grid.c4{grid-template-columns:repeat(4,1fr)}
+html{overflow-x:hidden}
+.top{gap:6px}.top .chip{padding:7px 9px;flex:none}
+h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.count{white-space:nowrap}
+@media (max-width:480px){.count{display:none}#hava{width:58px;height:40px}}
+.stk{position:sticky;top:-18px;z-index:3;background:var(--card);padding:18px 0 8px;border-bottom:1px solid var(--line)}
+.grid.sq .pic{border-radius:4px}.grid.ci .pic{border-radius:50%}
+#home,#garden{position:fixed;inset:0;z-index:15;background:linear-gradient(#a9cde6,#e6f1f8);overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(16px + env(safe-area-inset-bottom,0px))}
+#home.hide,#garden.hide{display:none}
+#home h2,#garden h2{margin:6px 0;color:var(--hi,#16324a);font-size:1.15rem;text-align:center}
+.hint{color:var(--hi,#16324a);font-size:.85rem;text-align:center;margin:8px 0}
+.scene{position:relative;width:100%;max-width:560px;aspect-ratio:400/340;flex:none}
+.scene>svg.bg{position:absolute;inset:0;width:100%;height:100%}
+.hav,.hpet{position:absolute;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hav{left:40%;bottom:8.2%;width:15.5%}
+.hpet{bottom:7.8%;width:11%;transition:left 3.5s linear,bottom 3.5s ease-in-out;z-index:2}
+.hav svg,.hpet svg{display:block;width:100%;height:auto}
+.pf{transition:transform .2s}
+.pb.walk{animation:bob .35s infinite alternate ease-in-out}
+.pb.hop,.hav.hop{animation:hop .5s}
+@keyframes bob{to{transform:translateY(-5%)}}
+@keyframes hop{40%{transform:translateY(-24%)}}
+.bub{position:absolute;bottom:105%;left:50%;transform:translateX(-50%);background:#fff;color:#222;border-radius:10px;padding:3px 8px;font-size:.75rem;white-space:nowrap;box-shadow:0 1px 4px #0004;pointer-events:none;z-index:5}
+.fl{transform-box:fill-box;transform-origin:50% 100%;animation:fl .5s infinite alternate}
+@keyframes fl{from{transform:scale(1,.88)}to{transform:scale(.9,1.12)}}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.lv{width:100%;max-width:560px;color:var(--hi,#16324a);font-size:.85rem;text-align:center;margin-bottom:6px}
+.bar{height:8px;border-radius:6px;background:#0002;overflow:hidden;margin:4px 0}.bar i{display:block;height:100%;background:var(--green)}
+.eggw{transform-box:fill-box;transform-origin:50% 100%;animation:egg 3s infinite}
+@keyframes egg{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-7deg)}90%{transform:rotate(7deg)}95%{transform:rotate(-4deg)}}
+.pb.fly .wg{transform-box:fill-box;transform-origin:50% 100%;animation:wing .18s infinite alternate}
+@keyframes wing{to{transform:scaleY(.55)}}
+.shake{animation:shake .5s infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+#mapC{height:58vh;border-radius:12px;overflow:hidden;position:relative;z-index:0}
+.mk{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 1px 4px #0005}
+.gpet{position:absolute;width:9.5%;cursor:pointer;transition:left 3s linear,bottom 3s ease-in-out;-webkit-tap-highlight-color:transparent}
+.gpet svg{display:block;width:100%;height:auto}
+</style>
+</head>
+<body>
+<section id="home"><h2 id="htt">Welcome to your cabin</h2><div id="hlv" class="lv"></div><div class="scene" id="scene"></div>
+<p class="hint">❄ Tap the notice board to open your Pokédex · say hi to your pet!</p>
+<div class="hbtns"><button class="btn p" id="hopen">📖 Open Pokédex</button><button class="btn" id="hadd">＋ New sighting</button><button class="btn" id="hgar">🌳 Garden</button><button class="btn" id="hch">🏆</button><button class="btn" id="hmap">🗺 Map</button><button class="btn" id="hcu">🎨</button><button class="btn" id="hfr">👥</button><button class="btn" id="hbk">💾</button><button class="btn" id="hmute">🔊</button></div></section>
+<section id="garden" class="hide"><h2 id="gtt">Your garden</h2><div id="glv" class="lv"></div><div class="scene" id="gscene"></div>
+<p class="hint">Tap the board for your challenges · tap a pet to say hi!</p>
+<div class="hbtns"><button class="btn p" id="gcab">🏠 Cabin</button><button class="btn" id="gchal">🏆 Challenges</button><button class="btn" id="gadd">＋ New sighting</button><button class="btn" id="gopen">📖 Pokédex</button></div></section>
+<header>
+  <div class="top"><div id="hava"></div><h1 id="ttl">Ecologist’s Pokédex</h1><div class="count" id="count"></div><button class="chip" id="mapbtn">🗺</button><button class="chip" id="homebtn">🏠</button><button class="chip" id="cubtn">🎨</button><button class="chip" id="frbtn">👥</button><button class="chip" id="bkbtn">💾</button></div>
+  <div class="regions" id="regions"></div>
+  <input type="search" id="q" class="srch" placeholder="Search species, place, notes…">
+</header>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main><div id="bk"></div><div class="grid" id="grid"></div></main>
+</div>
+<button class="fab" id="add">＋ New sighting</button>
+
+<div class="modal" id="addM"><div class="sheet">
+  <h2 id="addT">New sighting</h2>
+  <div class="row">
+    <button class="btn p" id="cam">📷 Take photo</button>
+    <button class="btn" id="gal">🖼 Choose photo</button>
+  </div>
+  <input type="file" id="fcam" accept="image/*" capture="environment" hidden>
+  <input type="file" id="fgal" accept="image/*" hidden>
+  <img class="preview" id="prev" alt="">
+  <label for="name">Common name</label><input type="text" id="name" placeholder="e.g. Red squirrel">
+  <label for="latin">Latin name (optional)</label><input type="text" id="latin" placeholder="e.g. Sciurus vulgaris">
+  <div class="row">
+    <div><label for="reg">Region</label><select id="reg"></select></div>
+    <div><label for="kind">Group</label><select id="kind"></select></div>
+  </div>
+  <div class="row"><div><label for="date">Date</label><input type="date" id="date"></div><div><label for="place">Place name (optional)</label><input type="text" id="place" placeholder="e.g. Glendalough"></div></div>
+  <div class="row"><div><label for="lat">Latitude</label><input type="text" inputmode="decimal" id="lat" placeholder="e.g. 53.3811"></div><div><label for="lng">Longitude</label><input type="text" inputmode="decimal" id="lng" placeholder="e.g. -6.5911"></div></div>
+  <div class="locrow"><span id="locst" class="meta"></span><button class="btn sm" id="relo" type="button">📍 Use my location</button></div>
+  <label for="notes">Notes (optional)</label><textarea id="notes" rows="2" placeholder="Habitat, location, date…"></textarea>
+  <div class="actions"><button class="btn" id="cancel">Cancel</button><button class="btn p" id="save">Add to Pokédex</button></div>
+</div></div>
+
+<div class="modal" id="bkM"><div class="sheet">
+  <h2>Backup &amp; restore</h2>
+  <p class="meta">Your sightings are stored in this browser only. Save a backup file now and then (to Google Drive, iCloud, email it to yourself…) so nothing is lost if browser data is cleared or you change phone.</p>
+  <p class="meta" id="bkinfo"></p>
+  <button class="btn p" id="exp" style="width:100%">⬇ Save backup file</button>
+  <label>Restore from a backup file</label>
+  <button class="btn" id="imp" style="width:100%">⬆ Restore from backup…</button>
+  <input type="file" id="fimp" accept=".json,application/json" hidden>
+  <label>Start over</label><button class="btn d" id="rst" style="width:100%">🗑 Reset everything…</button><p class="meta">Wipes all sightings, eggs, pets, ranks, friends and customisation from this device. Save a backup first if you might want it back.</p>
+  <div class="actions"><button class="btn" id="bkclose">Close</button></div>
+</div></div>
+<div class="modal" id="mapM"><div class="sheet" style="max-width:720px;padding:12px"><div id="mapT" class="meta" style="margin-bottom:8px"></div><div id="mapC"></div><div class="actions"><button class="btn p" id="mapX">Close</button></div></div></div>
+<div class="modal" id="chM"><div class="sheet" id="ch"></div></div>
+<div class="modal" id="evM"><div class="sheet" id="ev" style="text-align:center"></div></div>
+<div class="modal" id="cuM"><div class="sheet" id="cu"></div></div>
+<div class="modal" id="frM"><div class="sheet" id="fr"></div></div>
+<input type="file" id="fc" accept=".json,application/json" hidden>
+<div class="modal" id="viewM"><div class="sheet" id="view"></div></div>
+
+<script>
+const REGIONS=["Irish","European","African","Asian","American","Oceanian"];
+const TAX={Fauna:["Mammals","Birds","Reptiles","Amphibians","Fish","Insects","Other invertebrates"],
+Flora:["Trees","Shrubs","Wildflowers","Grasses & sedges","Ferns","Mosses & lichens"],
+Fungi:["Mushrooms","Other fungi"]};
+let items=[],fRegion="All",fKind="All",fSub=null,pendingImg=null,mem=false,db=null,q="",cur=null,editing=null;
+
+/* storage: IndexedDB, falls back to memory */
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open("ecodex",1);
+r.onupgradeneeded=()=>r.result.createObjectStore("sp",{keyPath:"id"});
+r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>{mem=true;res()}}catch(e){mem=true;res()}})}
+function tx(m){return db.transaction("sp",m).objectStore("sp")}
+function loadAll(){return new Promise(res=>{if(mem)return res([]);try{const q=tx("readonly").getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])}catch(e){res([])}})}
+function put(o){if(!mem)try{tx("readwrite").put(o)}catch(e){}}
+function del(id){if(!mem)try{tx("readwrite").delete(id)}catch(e){}}
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderFilters(){
+  $("regions").innerHTML=["All",...REGIONS].map(r=>`<button class="chip ${r===fRegion?"on":""}" data-r="${r}">${r==="All"?"All regions":r}</button>`).join("");
+  let h=`<button class="grp ${fKind==="All"?"on":""}" data-k="All">All species</button>`;
+  for(const k in TAX){
+    h+=`<button class="grp ${fKind===k&&!fSub?"on":""}" data-k="${k}">${k} ${fKind===k?"▾":"▸"}</button>`;
+    if(fKind===k)h+=TAX[k].map(s=>`<button class="sub ${fSub===s?"on":""}" data-k="${k}" data-s="${esc(s)}">${esc(s)}</button>`).join("");
+  }
+  $("nav").innerHTML=h;
+}
+function renderGrid(){
+  const list=items.map((it,i)=>({...it,n:i+1})).filter(it=>
+    (fRegion==="All"||it.region===fRegion)&&(fKind==="All"||it.kind===fKind)&&(!fSub||it.sub===fSub)&&(!q||[it.name,it.latin,it.notes,it.place,it.sub,it.kind,it.region].join(" ").toLowerCase().includes(q)));
+  $("count").textContent=items.length+" logged";
+  $("grid").innerHTML=list.length?list.map(it=>`<button class="tile" data-id="${it.id}"><div class="pic"><img src="${it.img}" alt="${esc(it.name)}"><span class="num">${pad(it.n)}</span></div><div class="nm">${esc(it.name)}</div></button>`).join("")
+  :`<div class="empty">${items.length?"No species match these filters.":"Your Pokédex is empty.<br>Tap “New sighting” to log your first species."}</div>`;
+}
+function render(){renderFilters();renderGrid();renderBk();checkEvents();renderHome();if(!$("garden").classList.contains("hide"))renderGarden()}
+
+$("regions").onclick=e=>{const r=e.target.dataset.r;if(r){fRegion=r;render()}};
+$("nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  const k=b.dataset.k,s=b.dataset.s;
+  if(s){fSub=fSub===s?null:s;fKind=k}
+  else if(k==="All"){fKind="All";fSub=null}
+  else{fKind=(fKind===k&&!fSub)?"All":k;fSub=null}
+  render()};
+
+/* add form */
+$("reg").innerHTML=REGIONS.map(r=>`<option>${r}</option>`).join("");
+$("kind").innerHTML=Object.keys(TAX).map(k=>`<optgroup label="${k}">`+TAX[k].map(s=>`<option value="${k}|${esc(s)}">${esc(s)}</option>`).join("")+`</optgroup>`).join("");
+function openAdd(){editing=null;$("addT").textContent="New sighting";$("save").textContent="Add to Pokédex";pendingImg=null;cur=null;$("prev").style.display="none";["name","latin","notes","place"].forEach(i=>$(i).value="");$("date").value=today();
+  if(fRegion!=="All")$("reg").value=fRegion;fillLL(null,"Tap “Use my location”, choose a photo with GPS, or type coordinates.");$("addM").classList.add("open")}
+$("add").onclick=openAdd;
+$("cancel").onclick=()=>{editing=null;$("addM").classList.remove("open")};
+$("cam").onclick=()=>$("fcam").click();$("gal").onclick=()=>$("fgal").click();
+function onFile(e){const f=e.target.files[0];if(!f)return;readPhoto(f,e.target.id==="fcam");
+  const img=new Image(),url=URL.createObjectURL(f);
+  img.onload=()=>{const m=900,sc=Math.min(1,m/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=img.width*sc;c.height=img.height*sc;
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    pendingImg=c.toDataURL("image/jpeg",.8);URL.revokeObjectURL(url);
+    $("prev").src=pendingImg;$("prev").style.display="block"};
+  img.src=url;e.target.value=""}
+$("fcam").onchange=onFile;$("fgal").onchange=onFile;
+$("save").onclick=()=>{
+  if(!pendingImg&&!editing){alert("Please add a photo first.");return}
+  const name=$("name").value.trim();if(!name){alert("Please enter a name.");return}
+  const [kind,sub]=$("kind").value.split("|");
+  const o={id:editing?editing.id:Date.now(),mod:Date.now(),name,latin:$("latin").value.trim(),region:$("reg").value,kind,sub,notes:$("notes").value.trim(),img:pendingImg||editing.img,date:$("date").value||today(),place:$("place").value.trim(),lat:cur?cur.lat:null,lng:cur?cur.lng:null,acc:cur?cur.acc:null};
+  if(editing){const i=items.findIndex(x=>x.id===editing.id);items[i]=o}else items.push(o);
+  put(o);editing=null;$("addM").classList.remove("open");render()};
+
+/* detail */
+$("grid").onclick=e=>{const t=e.target.closest(".tile");if(!t)return;
+  const i=items.findIndex(x=>x.id==t.dataset.id),it=items[i];
+  $("view").innerHTML=`<img class="big" src="${it.img}" alt="${esc(it.name)}"><h2>#${pad(i+1)} ${esc(it.name)}</h2>
+  <div class="meta">${it.latin?`<div class="latin">${esc(it.latin)}</div>`:""}<div>${esc(it.region)} · ${esc(it.kind)} · ${esc(it.sub)}</div><div>📅 ${esc(fmtDate(it.date))}</div>${it.place?`<div>📍 ${esc(it.place)}</div>`:""}${it.lat!=null?`<div>🧭 <a href="https://www.openstreetmap.org/?mlat=${it.lat}&mlon=${it.lng}#map=16/${it.lat}/${it.lng}" target="_blank" rel="noopener">${it.lat.toFixed(5)}, ${it.lng.toFixed(5)}</a>${it.acc?` (±${it.acc} m)`:""}</div>`:""}${it.notes?`<p>${esc(it.notes)}</p>`:""}</div>
+  <div class="actions"><button class="btn d" id="rm">Delete</button><button class="btn" id="ed">✏ Edit</button><button class="btn p" id="cl">Close</button></div>`;
+  $("viewM").classList.add("open");
+  $("cl").onclick=()=>$("viewM").classList.remove("open");
+  $("ed").onclick=()=>{$("viewM").classList.remove("open");openEdit(it)};
+  $("rm").onclick=()=>{if(confirm("Remove this species from your Pokédex?")){items.splice(i,1);del(it.id);$("viewM").classList.remove("open");render()}}};
+$("viewM").onclick=e=>{if(e.target.id==="viewM")e.target.classList.remove("open")};
+
+/* edit */
+function openEdit(it){editing=it;pendingImg=null;cur=it.lat!=null?{lat:it.lat,lng:it.lng,acc:it.acc}:null;
+  $("addT").textContent="Edit sighting";$("save").textContent="Save changes";
+  $("prev").src=it.img;$("prev").style.display="block";
+  $("name").value=it.name;$("latin").value=it.latin||"";$("notes").value=it.notes||"";$("place").value=it.place||"";
+  $("date").value=/^\d{4}-\d\d-\d\d$/.test(it.date||"")?it.date:today();
+  $("reg").value=it.region;$("kind").value=it.kind+"|"+it.sub;
+  fillLL(cur,cur?"Saved position – edit if needed":"No GPS saved for this sighting.");
+  $("addM").classList.add("open")}
+
+/* dates, GPS, search */
+function today(){return new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+function fmtDate(d){if(!d)return"";return /^\d{4}-\d\d-\d\d$/.test(d)?new Date(d+"T12:00:00").toLocaleDateString("en-IE",{day:"numeric",month:"short",year:"numeric"}):d}
+function getLoc(){const s=$("locst");
+  if(!navigator.geolocation){s.textContent="GPS not available – type coordinates instead.";return}
+  s.textContent="Locating…";
+  try{navigator.geolocation.getCurrentPosition(p=>{const a=Math.round(p.coords.accuracy);fillLL({lat:p.coords.latitude,lng:p.coords.longitude,acc:a},`📍 Current GPS (±${a} m)`)},
+  ()=>{s.textContent="Couldn’t get GPS – type coordinates or choose a photo with location."},{enableHighAccuracy:true,timeout:15000,maximumAge:30000})}
+  catch(e){s.textContent="Couldn’t get GPS – type coordinates instead."}}
+$("relo").onclick=getLoc;
+$("q").oninput=e=>{q=e.target.value.trim().toLowerCase();renderGrid()};
+
+/* backup & restore */
+function lastBk(){try{return +localStorage.getItem("ecodex_bk")||0}catch(e){return 0}}
+function setBk(t){try{localStorage.setItem("ecodex_bk",t)}catch(e){}}
+function renderBk(){const n=items.filter(i=>(i.mod||i.id)>lastBk()).length;
+  $("bk").innerHTML=n>=3?`<div class="warn"><span>⚠ ${n} sightings not backed up yet.</span><button class="btn p sm" id="bknow">Back up now</button></div>`:""}
+function bkInfo(){$("bkinfo").textContent=(lastBk()?"Last backup: "+new Date(lastBk()).toLocaleString("en-IE"):"No backup saved yet.")+" · "+items.length+" sightings in the Pokédex"}
+$("bk").onclick=e=>{if(e.target.id==="bknow")doExport()};
+$("bkbtn").onclick=()=>{bkInfo();$("bkM").classList.add("open")};
+$("bkclose").onclick=()=>$("bkM").classList.remove("open");
+$("exp").onclick=()=>doExport();
+function plainDownload(){try{
+  const blob=new Blob([JSON.stringify(snap())],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`ecologists-pokedex-backup-${today()}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  setBk(Date.now());renderBk();bkInfo()}
+  catch(e){alert("Couldn’t save the backup on this device.")}}
+async function doExport(){
+  if(!items.length){alert("Nothing to back up yet.");return}
+  let dl=null;try{dl=(window.claude&&claude.use)?await claude.use("downloads"):null}catch(e){}
+  if(!dl){plainDownload();return}
+  try{await dl.save({filename:`ecologists-pokedex-backup-${today()}.json`,data:JSON.stringify(snap())});
+    setBk(Date.now());renderBk();bkInfo()}
+  catch(e){if(!e||e.code!=="declined")alert("Couldn’t save the backup ("+((e&&e.code)||"error")+").")}}
+$("imp").onclick=()=>$("fimp").click();
+$("fimp").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result),arr=Array.isArray(j)?j:j.items;if(!Array.isArray(arr))throw 0;
+    const had=items.length,have=new Set(items.map(i=>i.id));
+    const add=arr.filter(o=>o&&o.id&&o.img&&o.name&&!have.has(o.id));
+    add.forEach(o=>{items.push(o);put(o)});items.sort((a,b)=>a.id-b.id);
+    if(j.profile&&!profile.name){profile=Object.assign(defProfile(),j.profile,{id:"profile"});ensureUid();saveProfile();applyProfile()}
+    (Array.isArray(j.friends)?j.friends:[]).forEach(f=>{if(f&&typeof f.uid==="string"&&Array.isArray(f.items)&&!friends.some(x=>x.uid===f.uid)){f.id="f:"+f.uid;friends.push(f);put(f)}});
+    if(!had&&add.length)setBk(Date.now());
+    render();bkInfo();
+    alert(add.length?`Restored ${add.length} sighting${add.length>1?"s":""}.`:"Nothing new to restore – everything in that file is already here.")}
+  catch(x){alert("That doesn’t look like a Pokédex backup file.")}};
+  r.readAsText(f);e.target.value=""};
+
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+/* profile, avatar, pet */
+const HX=["#e9d6a3","#e85d8f","#7b4bd1","#1fa37a"];
+const SK=["#ffdbb4","#f1c27d","#c68642","#8d5524","#5c3a21"],HC=["#222","#6b3e1e","#c9a227","#b5391f","#9aa0a6","#3b6fd4",...HX],SH=["#c8372d","#2f7d4f","#3b6fd4","#e0a526","#8e44ad","#222"],PC=["#f4f1ea","#c68642","#e07b39","#555","#e8c547","#7fb069"],BAN=["#c8372d","#2f7d4f","#1d7bd1","#8e44ad","#e0803a","#d4488a","#222b33","#0f7b7b"];
+const OPT={hair:["Short","Long","Bun","Bald","Spiky","Curly","Ponytail","Pigtails","Bob","Mohawk"],face:["Smile","Grin","Glasses","Neutral"],acc:["None","Field cap","Binoculars","Flower","Beanie","Scarf","Sunglasses","Backpack","Rain hood","Safari hat"],pet:["Dog","Cat","Fox","Owl","Frog","Rabbit","Mouse","Squirrel","Robin","Crow","Eagle","Badger","Deer","Hedgehog","Goat","Otter","Kingfisher"]};
+const pk=(L,x)=>L[Math.abs(+x||0)%L.length],P=L=>L.map((t,i)=>[t,i]);
+const defProfile=()=>({id:"profile",uid:"",name:"",banner:"#c8372d",accent:"#2f7d4f",theme:"auto",shape:"r",cols:0,av:{skin:1,hair:0,hc:1,face:0,shirt:1},pet:{type:6,color:3,name:""}});
+let profile=defProfile(),friends=[];
+function saveProfile(){put(profile)}
+function ensureUid(){if(!profile.uid){profile.uid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);saveProfile()}}
+function snap(){return{app:"ecologists-pokedex",version:2,exported:new Date().toISOString(),items,profile,friends}}
+function petSVG(pt){return pet2(Math.abs(+pt.type||0)%17,pk(PC,pt.color))}
+function ava(a,pt,withPet){a=a||{};const h=pk(HC,a.hc),k=pk(SK,a.skin),sh=pk(SH,a.shirt),s='stroke="#222" fill="none"',hi=Math.abs(+a.hair||0)%10,
+ fr=`<path d="M21 36a19 19 0 0138 0q-4-8-13-8-8 8-25 8z" fill="${h}"/>`,
+ st=d=>`<path d="${d}" stroke="#0003" fill="none" stroke-width="1"/>`,
+ sf=st("M30 24q3 3 2 8M40 21q1 4 0 7M50 24q-2 3-1 8"),
+ ci=L=>L.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${h}" stroke="#0002"/>`).join(""),
+ bt=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#e0483d"/>`,
+ back=["",`<path d="M18 40a22 22 0 0144 0v24H18z" fill="${h}"/>`+st("M22 46v14M27 44v16M53 44v16M58 46v14"),"","","",ci([[22,30,9],[58,30,9],[16,42,8],[64,42,8],[30,17,9],[50,17,9],[40,13,9]]),`<path d="M56 30q16 4 10 26q-3-14-13-18z" fill="${h}"/>`+bt(57,31),`<path d="M22 36q-13 4-9 24q4-13 11-16zM58 36q13 4 9 24q-4-13-11-16z" fill="${h}"/>`+bt(22,36)+bt(58,36),`<path d="M18 40a22 22 0 0144 0v13q0 5-5 5h-3V40H26v18h-3q-5 0-5-5z" fill="${h}"/>`,""],
+ front=[fr+sf,fr+sf,`<circle cx="40" cy="13" r="8" fill="${h}"/><path d="M34 19h12" stroke="#0004"/>`+fr+sf,"",`<path d="M22 33l4-15 6 10 8-14 8 14 6-10 4 15q-19-8-38 0z" fill="${h}"/>`+st("M28 26l3-6M40 22v-8M52 26l-3-6"),ci([[28,26,6],[40,23,6],[52,26,6]]),fr+sf,fr+sf,`<path d="M21 36a19 19 0 0138 0q-19 5-38 0z" fill="${h}"/>`+sf,`<path d="M34 24q0-14 6-17 6 3 6 17z" fill="${h}"/><path d="M22 32a19 19 0 0136 0q-18-6-36 0z" fill="${h}" opacity=".3"/>`],
+ face=[`<path d="M34 47q6 5 12 0" ${s}/>`,`<path d="M34 46h12q-2 7-6 7t-6-7z" fill="#fff" stroke="#222"/>`,`<circle cx="33" cy="38" r="6" ${s}/><circle cx="47" cy="38" r="6" ${s}/><path d="M39 38h2M34 47q6 5 12 0" ${s}/>`,`<path d="M35 48h10" ${s}/>`],
+ acc=["",`<path d="M20 31a20 17 0 0140 0z" fill="#3d6b4f"/><path d="M50 31h16q0 4-16 4z" fill="#2c4f3a"/>`,`<path d="M30 62q10 9 20 0" stroke="#444" stroke-width="1.5" fill="none"/><rect x="30" y="66" width="8" height="10" rx="2.5" fill="#333"/><rect x="42" y="66" width="8" height="10" rx="2.5" fill="#333"/><rect x="37" y="69" width="6" height="3" fill="#555"/>`,`<g fill="#f7a8c4"><circle cx="54" cy="21" r="2.5"/><circle cx="57" cy="24" r="2.5"/><circle cx="54" cy="27" r="2.5"/><circle cx="51" cy="24" r="2.5"/></g><circle cx="54" cy="24" r="2" fill="#f5d442"/>`,...NEWACC],
+ eye=x=>`<ellipse cx="${x}" cy="38" rx="3.2" ry="3" fill="#fff"/><circle cx="${x}" cy="38.3" r="1.9" fill="#222"/><circle cx="${x+.7}" cy="37.5" r=".7" fill="#fff"/>`;
+ return `<svg viewBox="0 0 ${withPet?120:80} 80" xmlns="http://www.w3.org/2000/svg">${back[hi]}<path d="M16 80q0-20 24-20t24 20z" fill="${sh}"/><path d="M32 61l8 9 8-9z" fill="#fff" opacity=".85"/><rect x="35" y="52" width="10" height="11" fill="${k}"/><rect x="35" y="52" width="10" height="4" fill="#0003"/><circle cx="22" cy="40" r="3.5" fill="${k}" stroke="#0002"/><circle cx="58" cy="40" r="3.5" fill="${k}" stroke="#0002"/><circle cx="40" cy="38" r="18" fill="${k}"/>${front[hi]}${hi==3?"":`<path d="M30 21q6-4 12-3" stroke="#fff" stroke-opacity=".3" stroke-width="2" fill="none"/>`}<path d="M29 32q4-2.5 8 0M43 32q4-2.5 8 0" stroke="${h}" stroke-width="1.6" fill="none" stroke-linecap="round"/>${eye(33)}${eye(47)}<path d="M40 40q-2.5 5 0 5" stroke="#0005" fill="none"/><circle cx="30" cy="45" r="3" fill="#ff6b7a" opacity=".22"/><circle cx="50" cy="45" r="3" fill="#ff6b7a" opacity=".22"/>${pk(face,a.face)}${pk(acc,a.acc)}${withPet?petSVG(pt||{}):""}</svg>`}
+function applyProfile(){const r=document.documentElement,p=profile;r.style.setProperty("--red",p.banner);r.style.setProperty("--green",p.accent);
+ if(p.theme==="auto")r.removeAttribute("data-theme");else r.dataset.theme=p.theme;
+ $("ttl").textContent=p.name?`${p.name}’s Pokédex`:"Ecologist’s Pokédex";$("hava").innerHTML=ava(p.av,p.pet,true);renderHome();
+ $("grid").className="grid"+(p.cols?" c"+p.cols:"")+(p.shape&&p.shape!=="r"?" "+p.shape:"")}
+function sw(g,k,L,cur,hex){return `<div class="sw">`+L.map((c,i)=>`<i data-g="${g}" data-k="${k}" data-v="${hex?c:i}" class="${(hex?c===cur:i===cur)?"on":""}" style="background:${c}"></i>`).join("")+`</div>`}
+function ob(g,k,L,cur){return `<div class="sw">`+L.map(([t,v])=>`<button class="btn sm ${String(v)===String(cur)?"p":""}" data-g="${g}" data-k="${k}" data-v="${v}">${t}</button>`).join("")+`</div>`}
+function renderCu(){const p=profile,a=p.av,t=p.pet;
+ $("cu").innerHTML=`<h2>Customise</h2><div class="stk"><div id="cprev" style="width:170px;margin:0 auto">${ava(a,t,true)}</div></div>
+<label>Trainer name</label><input type="text" data-k="name" value="${esc(p.name)}" maxlength="30">
+<label>Pet name</label><input type="text" data-g="pet" data-k="name" value="${esc(t.name||"")}" maxlength="20">
+<label>Banner colour</label>${sw("","banner",BAN,p.banner,1)}<label>Accent colour (buttons &amp; filters)</label>${sw("","accent",BAN,p.accent,1)}
+<label>Theme</label>${ob("","theme",[["Auto","auto"],["Light","light"],["Dark","dark"]],p.theme)}
+<label>Tile shape</label>${ob("","shape",[["Rounded","r"],["Square","sq"],["Circle","ci"]],p.shape)}
+<label>Tiles across</label>${ob("","cols",[["Auto",0],["2",2],["3",3],["4",4]],p.cols)}
+<label>Skin</label>${sw("av","skin",SK,a.skin)}<label>Hair</label>${ob("av","hair",P(OPT.hair),a.hair)}<div style="height:6px"></div>${sw("av","hc",HC,a.hc)}
+<label>Face</label>${ob("av","face",P(OPT.face),a.face)}<label>Extra</label>${accBtns(a.acc)}<label>Shirt</label>${sw("av","shirt",SH,a.shirt)}
+<label>Pet</label>${petBtns(t.type)}<div style="height:6px"></div>${sw("pet","color",PC,t.color)}
+<div class="actions"><button class="btn p" id="cudone">Done</button></div>`}
+$("cubtn").onclick=$("hava").onclick=()=>{renderCu();$("cuM").classList.add("open")};
+$("cu").onclick=e=>{const t=e.target.closest("[data-v],#cudone");if(!t)return;if(t.id==="cudone"){$("cuM").classList.remove("open");return}
+ const {g,k,v}=t.dataset;(g?profile[g]:profile)[k]=/^\d+$/.test(v)?+v:v;if(g==="pet"&&k==="type")profile.pet.color=NAT[+v];saveProfile();applyProfile();renderCu()};
+$("cu").oninput=e=>{const t=e.target,{g,k}=t.dataset;if(!k)return;(g?profile[g]:profile)[k]=t.value;saveProfile();applyProfile();$("cprev").innerHTML=ava(profile.av,profile.pet,true)};
+["cuM","frM"].forEach(id=>$(id).onclick=e=>{if(e.target.id===id)e.target.classList.remove("open")});
+
+/* friends & monthly challenge (card files – no server needed) */
+async function saveFile(n,t){let dl=null;try{dl=(window.claude&&claude.use)?await claude.use("downloads"):null}catch(e){}
+ if(dl){try{await dl.save({filename:n,data:t});return}catch(e){if(e&&e.code==="declined")return}}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"application/json"}));a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const thumb=src=>new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas"),s=180/Math.max(i.width,i.height);c.width=i.width*s;c.height=i.height*s;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.6))};i.onerror=()=>r("");i.src=src});
+function score(its,m){const seen=new Set();let n=0;its.filter(i=>/^\d{4}-\d\d-\d\d$/.test(i.date)).sort((a,b)=>a.date<b.date?-1:1).forEach(i=>{const k=(i.latin||i.name).toLowerCase().trim();if(!seen.has(k)){seen.add(k);if(i.date.slice(0,7)===m)n++}});return n}
+function renderFr(v){const m=today().slice(0,7);
+ if(v){const f=friends.find(x=>x.uid===v);if(f){$("fr").innerHTML=`<button class="btn sm" id="frback">← Back</button><h2>${esc(f.name)}’s Pokédex</h2><div class="grid c3">`+(f.items.map((it,i)=>`<div class="tile"><div class="pic"><img src="${it.img}" alt=""><span class="num">${pad(i+1)}</span></div><div class="nm">${esc(it.name)}</div></div>`).join("")||"<div class=\"empty\">No species yet.</div>")+`</div>`;return}}
+ const rows=[{n:profile.name||"You",a:profile.av,p:profile.pet,s:score(items,m),me:1},...friends.map(f=>({n:f.name,a:f.av,p:f.pet,s:score(f.items,m)}))].sort((a,b)=>b.s-a.s);
+ $("fr").innerHTML=`<h2>Friends &amp; challenge</h2><p class="meta">Monthly challenge (${new Date().toLocaleString("en-IE",{month:"long",year:"numeric"})}): 10 points for every species you log for the first time this month. Friends swap small “cards” – import a friend’s latest card to see their Pokédex and refresh the scoreboard. Finish a month in first place (with at least one friend in the game) to win a golden bonus egg that hatches into a goat!</p>`+rows.map((r,i)=>`<div class="frow"><b>${["🥇","🥈","🥉"][i]||i+1}</b><div style="width:60px">${ava(r.a,r.p,true)}</div><span style="flex:1">${esc(r.n)}${r.me?" (you)":""}</span><b>${r.s*10} pts</b></div>`).join("")+`<div class="row" style="margin:12px 0"><button class="btn p" id="myc">⬆ Share my card</button><button class="btn" id="impc">⬇ Add / update friend</button></div>`+friends.map(f=>`<div class="frow"><span style="flex:1">${esc(f.name)} · ${f.items.length} species</span><button class="btn sm" data-a="view" data-u="${esc(f.uid)}">View</button><button class="btn sm d" data-a="rm" data-u="${esc(f.uid)}">✕</button></div>`).join("")+`<div class="actions"><button class="btn p" id="frclose">Close</button></div>`}
+$("frbtn").onclick=()=>{renderFr();$("frM").classList.add("open")};
+$("fr").onclick=async e=>{const t=e.target.closest("button");if(!t)return;const u=t.dataset.u,a=t.dataset.a;
+ if(t.id==="frclose")$("frM").classList.remove("open");else if(t.id==="frback")renderFr();else if(t.id==="impc")$("fc").click();
+ else if(t.id==="myc"){if(!items.length){alert("Log a species first.");return}ensureUid();t.textContent="Preparing…";
+  const its=[];for(const i of items)its.push({name:i.name,latin:i.latin,date:i.date,img:await thumb(i.img)});
+  await saveFile(`pokedex-card-${(profile.name||"me").replace(/\W+/g,"-")}.json`,JSON.stringify({app:"ecologists-pokedex-card",v:1,uid:profile.uid,name:profile.name||"Ecologist",av:profile.av,pet:profile.pet,items:its}));t.textContent="⬆ Share my card"}
+ else if(a==="view")renderFr(u);else if(a==="rm"&&confirm("Remove this friend?")){friends=friends.filter(f=>f.uid!==u);del("f:"+u);renderFr()}};
+$("fc").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);
+  if(j.app!=="ecologists-pokedex-card"||typeof j.uid!=="string"||!Array.isArray(j.items))throw 0;
+  if(j.uid===profile.uid){alert("That’s your own card!");return}
+  const fr={id:"f:"+j.uid,uid:j.uid,name:String(j.name||"Friend").slice(0,30),av:j.av||{},pet:j.pet||{},items:j.items.filter(i=>i&&typeof i.img==="string"&&i.img.startsWith("data:image/")).map(i=>({name:String(i.name||"").slice(0,60),latin:String(i.latin||"").slice(0,60),date:String(i.date||"").slice(0,10),img:i.img}))};
+  friends=friends.filter(x=>x.uid!==fr.uid);friends.push(fr);put(fr);renderFr()}catch(x){alert("That doesn’t look like a Pokédex friend card.")}};r.readAsText(f);e.target.value=""};
+
+/* cosy cabin home screen */
+const hpx={x:44,y:7.8},PX=new Map(),LINES=["Hello!","Brr, snowy out!","Found anything new?","Let’s go birding!"];
+const TXT=["Woof!","Meow!","Yip!","Hoo hoo!","Ribbit!","Squeak!"],
+SND=[[[0,260,140,.14,"sawtooth",.3],[.22,260,140,.14,"sawtooth",.3]],[[0,450,800,.25,"triangle",.3],[.25,800,420,.3,"triangle",.3]],[[0,800,1300,.1,"square",.12],[.15,800,1300,.1,"square",.12],[.3,900,1500,.14,"square",.12]],[[0,330,300,.3,"sine",.4],[.4,330,300,.45,"sine",.4]],[[0,120,220,.1,"square",.2],[.12,140,230,.1,"square",.2],[.3,120,240,.14,"square",.2]],[[0,1200,1700,.12,"sine",.2],[.15,1300,1800,.1,"sine",.18]]];
+let AC=null,hTimer=0;
+function play(t){if(profile.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const n=AC.currentTime;
+ SND[t].forEach(([s,a,b,d,w,v])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.frequency.setValueAtTime(a,n+s);o.frequency.linearRampToValueAtTime(b,n+s+d);g.gain.setValueAtTime(0,n+s);g.gain.linearRampToValueAtTime(v,n+s+.02);g.gain.linearRampToValueAtTime(0,n+s+d);o.connect(g);g.connect(AC.destination);o.start(n+s);o.stop(n+s+d+.05)})}catch(e){}}
+function say(el,t){const b=document.createElement("div");b.className="bub";b.textContent=t;el.appendChild(b);setTimeout(()=>b.remove(),1300)}
+function hop(el){el.classList.remove("hop");void el.offsetWidth;el.classList.add("hop")}
+const pix=it=>{const key=it.id+":"+it.img.length;return PX.has(key)?Promise.resolve(PX.get(key)):new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas");c.width=c.height=8;const s=Math.min(i.width,i.height);c.getContext("2d").drawImage(i,(i.width-s)/2,(i.height-s)/2,s,s,0,0,8,8);const u=c.toDataURL();PX.set(key,u);r(u)};i.onerror=()=>r("");i.src=it.img})};
+/* photo GPS, manual coordinates, reset */
+function exif(buf){try{const v=new DataView(buf);if(v.getUint16(0)!==0xFFD8)return null;let o=2;
+ while(o<v.byteLength-10){const m=v.getUint16(o),l=v.getUint16(o+2);if((m&0xFF00)!==0xFF00||m===0xFFDA)break;
+  if(m===0xFFE1&&v.getUint32(o+4)===0x45786966){const t=o+10,le=v.getUint16(t)===0x4949,g16=a=>v.getUint16(a,le),g32=a=>v.getUint32(a,le),
+   ifd=a=>{const r={},n=g16(a);for(let i=0;i<n;i++){const e=a+2+i*12;r[g16(e)]={c:g32(e+4),o:e+8}}return r},
+   rat=e=>{const p=t+g32(e.o);return Array.from({length:e.c},(_,i)=>g32(p+i*8)/(g32(p+i*8+4)||1))},
+   asc=e=>{const p=e.c<=4?e.o:t+g32(e.o);let s="";for(let i=0;i<e.c-1;i++)s+=String.fromCharCode(v.getUint8(p+i));return s},
+   I0=ifd(t+g32(t+4)),out={};
+   if(I0[0x8825]){const G=ifd(t+g32(I0[0x8825].o));if(G[2]&&G[4]){const d=r=>{const a=rat(r);return a[0]+a[1]/60+a[2]/3600};let la=d(G[2]),lo=d(G[4]);if(G[1]&&asc(G[1])==="S")la=-la;if(G[3]&&asc(G[3])==="W")lo=-lo;if(isFinite(la)&&isFinite(lo)&&(la||lo)){out.lat=la;out.lng=lo}}}
+   if(I0[0x8769]){const X=ifd(t+g32(I0[0x8769].o)),d=X[0x9003]||X[0x9004];if(d){const s=asc(d);if(/^\d{4}:\d\d:\d\d/.test(s))out.date=s.slice(0,4)+"-"+s.slice(5,7)+"-"+s.slice(8,10)}}
+   return out}
+  o+=2+l}}catch(e){}return null}
+function fillLL(c,msg){cur=c;$("lat").value=c?c.lat.toFixed(6):"";$("lng").value=c?c.lng.toFixed(6):"";$("locst").textContent=msg}
+async function readPhoto(f,cam){let x=null;try{x=exif(await f.slice(0,262144).arrayBuffer())}catch(e){}
+ if(x&&x.date)$("date").value=x.date;
+ if(x&&x.lat!=null)fillLL({lat:x.lat,lng:x.lng,acc:null},"📷 Location taken from the photo – edit if it’s wrong");
+ else if(cam)getLoc();
+ else if(!cur)fillLL(null,"No GPS found in this photo – type coordinates or tap “Use my location”.")}
+$("lat").oninput=$("lng").oninput=()=>{const a=parseFloat($("lat").value.replace(",",".")),b=parseFloat($("lng").value.replace(",","."));
+ if(isFinite(a)&&isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180){cur={lat:a,lng:b,acc:null};$("locst").textContent="✏ Manual coordinates"}
+ else{cur=null;$("locst").textContent=($("lat").value||$("lng").value)?"Enter valid coordinates, e.g. 53.3811 and -6.5911":"No location"}};
+function wipeAll(){return new Promise(res=>{if(mem||!db)return res();try{const r=tx("readwrite").clear();r.onsuccess=r.onerror=()=>res()}catch(e){res()}})}
+$("rst").onclick=async()=>{if(!confirm("Reset EVERYTHING? All sightings, eggs, pets, ranks, friends and customisation will be deleted from this device."))return;
+ if((prompt("Type RESET to confirm. This can’t be undone unless you saved a backup file.")||"").trim().toUpperCase()!=="RESET")return;
+ await wipeAll();items=[];friends=[];profile=defProfile();ensureUid();saveProfile();try{localStorage.removeItem("ecodex_bk")}catch(e){}
+ PX.clear();EVQ.length=0;hpx.x=44;hpx.y=7.8;$("bkM").classList.remove("open");applyProfile();render();showHome();alert("All reset – you’re back to a fresh start.")};
+
+/* challenges, clothing, garden */
+const DCH=[{t:"Log a sighting today",m:"n",g:1},{t:"Discover a new species today",m:"new",g:1},{t:"Spot a bird today",m:"sub",v:"Birds",g:1},{t:"Find a tree today",m:"sub",v:"Trees",g:1},{t:"Photograph a wildflower today",m:"sub",v:"Wildflowers",g:1},{t:"Log a sighting with GPS today",m:"gps",g:1},{t:"Find an insect today",m:"sub",v:"Insects",g:1}];
+const WCH=[{t:"Add 3 sightings this week",m:"n",g:3},{t:"Discover 2 new species this week",m:"new",g:2},{t:"Spot 2 birds this week",m:"sub",v:"Birds",g:2},{t:"Log 3 plants this week",m:"kind",v:"Flora",g:3},{t:"Add 4 sightings with GPS this week",m:"gps",g:4},{t:"Log sightings from 3 different groups this week",m:"grp",g:3}];
+const MCH=[{t:"Add 10 sightings this month",m:"n",g:10},{t:"Discover 8 new species this month",m:"new",g:8},{t:"Log 4 different groups this month",m:"grp",g:4},{t:"Spot 5 birds this month",m:"sub",v:"Birds",g:5},{t:"Add 6 sightings with GPS this month",m:"gps",g:6}];
+function prog(c,a,b){const ok=i=>/^\d{4}-\d\d-\d\d$/.test(i.date),L=items.filter(i=>ok(i)&&i.date>=a&&i.date<=b);
+ if(c.m==="new"){const f={};items.filter(ok).sort((x,y)=>x.date<y.date?-1:1).forEach(i=>{const k=(i.latin||i.name).toLowerCase().trim();if(!(k in f))f[k]=i.date});return Object.values(f).filter(d=>d>=a&&d<=b).length}
+ if(c.m==="gps")return L.filter(i=>i.lat!=null).length;if(c.m==="grp")return new Set(L.map(i=>i.sub)).size;
+ if(c.m==="sub")return L.filter(i=>i.sub===c.v).length;if(c.m==="kind")return L.filter(i=>i.kind===c.v).length;return L.length}
+function periods(){const t=today(),d=new Date(t+"T12:00:00"),dn=Math.floor(d.getTime()/864e5),mon=new Date(d),sun=new Date(d),iso=x=>new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ mon.setDate(d.getDate()-(d.getDay()+6)%7);sun.setTime(mon.getTime());sun.setDate(mon.getDate()+6);const mo=t.slice(0,7);
+ return[{k:"d:"+t,c:DCH[dn%7],a:t,b:t,xp:2,l:"Daily"},{k:"w:"+iso(mon),c:WCH[Math.floor(dn/7)%6],a:iso(mon),b:iso(sun),xp:5,l:"Weekly"},{k:"m:"+mo,c:MCH[(d.getFullYear()*12+d.getMonth())%5],a:mo+"-01",b:mo+"-31",xp:15,l:"Monthly"}]}
+const accOk=i=>i<4||(profile.cloth||[]).includes(i);
+function accBtns(cur){return `<div class="sw">`+OPT.acc.map((n,v)=>{const o=accOk(v);return `<button class="btn sm ${v===cur?"p":""}" data-g="av" data-k="acc" data-v="${v}" ${o?"":"disabled style=\"opacity:.45\""}>${o?"":"🔒 "}${n}</button>`}).join("")+`</div><p class="meta">🏆 Complete weekly challenges to unlock new clothing.</p>`}
+function renderCh(){const done=profile.done||[];$("ch").innerHTML=`<h2>🏆 Challenges</h2>`+periods().map(p=>{const n=prog(p.c,p.a,p.b),g=p.c.g;return `<div style="margin:12px 0;text-align:left"><b>${p.l}</b> · +${p.xp} pts${p.l==="Weekly"?" + new clothing":p.l==="Monthly"?" + golden egg":""}<br>${esc(p.c.t)}<div class="bar"><i style="width:${Math.min(100,n/g*100)}%"></i></div><span class="meta">${done.includes(p.k)?"✅ Complete!":Math.min(n,g)+" / "+g}</span></div>`}).join("")+`<p class="meta">Challenges reset each day, week (Mon–Sun) and month. Only sightings dated inside the period count.</p><div class="actions" style="justify-content:center"><button class="btn p" id="chx">Close</button></div>`}
+function openCh(){renderCh();$("chM").classList.add("open");$("chx").onclick=()=>$("chM").classList.remove("open")}
+const snowman=(x,y)=>`<g transform="translate(${x},${y})"><circle cy="-8" r="11" fill="#fff" stroke="#0002"/><circle cy="-24" r="8" fill="#fff" stroke="#0002"/><circle cx="-3" cy="-26" r="1.2"/><circle cx="3" cy="-26" r="1.2"/><path d="M0-24l7 1.5-7 1z" fill="#f08a24"/><path d="M-9-9l-10-6M9-9l10-6" stroke="#6b4a32" stroke-width="1.5"/><path d="M-6-17q6 3 12 0" stroke="#c8372d" stroke-width="3" fill="none"/></g>`;
+let gT=0;
+function renderGarden(mo){const m=mo==null?new Date().getMonth():mo,S=season(m),P=periods(),aur=m===1,sky=aur?["#0a1a33","#1d4a5a"]:S.sky;
+ $("garden").style.background=`linear-gradient(${sky[0]},${sky[1]})`;$("garden").style.setProperty("--hi",aur?"#fff":S.ink);
+ $("gtt").textContent=(profile.name?profile.name+"’s garden":"Your garden")+" "+S.em;
+ const notes=P.map((p,i)=>{const n=prog(p.c,p.a,p.b),f=Math.min(1,n/p.c.g),x=277+i*22;return `<rect x="${x}" y="220" width="19" height="34" fill="${["#ffe89a","#b9dcf5","#f7bfd4"][i]}" stroke="#0002"/><text x="${x+9.5}" y="233" font-size="9" font-weight="700" text-anchor="middle" fill="#4a2f1c">${"DWM"[i]}</text><text x="${x+9.5}" y="244" font-size="8" text-anchor="middle" fill="#4a2f1c">${f>=1?"✓":n+"/"+p.c.g}</text><rect x="${x+2}" y="249" width="15" height="3" fill="#0003"/><rect x="${x+2}" y="249" width="${15*f}" height="3" fill="#2f7d4f"/>`}).join(""),
+ fl=S.fl?Array.from({length:Math.min(S.fl[0],30)},(_,i)=>{const x=(i*29+17)%370+15,y=292+(i*11)%28;return S.fl[2]?`<ellipse cx="${x}" cy="${y}" rx="4" ry="2" fill="${S.fl[1][i%S.fl[1].length]}" transform="rotate(${i*40%90} ${x} ${y})"/>`:`<path d="M${x} ${y}v7" stroke="#3a8a3a"/><circle cx="${x}" cy="${y}" r="3" fill="${S.fl[1][i%S.fl[1].length]}"/><circle cx="${x}" cy="${y}" r="1.1" fill="#f5d442"/>`}).join(""):"",
+ pud=(S.w==="rain"||S.w==="sleet")?[[90,312],[240,322],[340,302]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="16" ry="4" fill="#9fc2dc" opacity=".75"/><ellipse cx="${x}" cy="${y}" rx="3" ry="1" fill="none" stroke="#fff"><animate attributeName="rx" from="3" to="14" dur="1.6s" begin="${i*.5}s" repeatCount="indefinite"/><animate attributeName="opacity" from=".9" to="0" dur="1.6s" begin="${i*.5}s" repeatCount="indefinite"/></ellipse>`).join(""):"",
+ aurS=aur?`<g><path d="M0 70q100-45 200-5t200-10v38q-100 30-200 8t-200 12z" fill="#4fe3a0" opacity=".3"><animate attributeName="opacity" values=".15;.45;.15" dur="6s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="-12 0;12 8;-12 0" dur="9s" repeatCount="indefinite"/></path><path d="M0 98q120-40 220 0t180-14v26q-90 28-180 8t-220 10z" fill="#9b7bff" opacity=".25"><animateTransform attributeName="transform" type="translate" values="10 0;-10 6;10 0" dur="11s" repeatCount="indefinite"/></path>${[[40,20],[120,40],[250,15],[330,35],[380,12],[200,28]].map(([x,y],i)=>tw(x,y,"#fff",1.2,i)).join("")}</g>`:"",
+ t3=S.tr?leafTree(205,...S.tr):pineT(205),hill=S.w==="snow"?"#dfe9f1":S.gr,
+ hp="M0 238q80-30 160-10t160-10q60 4 80 8v120H0z",fence=Array.from({length:17},(_,i)=>`<rect x="${i*24+4}" y="246" width="4" height="18" fill="#a98355"/>`).join("")+`<rect y="250" width="400" height="2" fill="#a98355"/><rect y="258" width="400" height="2" fill="#a98355"/>`,
+ ps=ORD.filter(isOpen),cp=Math.abs(+profile.pet.type||0)%17;
+ $("gscene").innerHTML=`<svg class="bg" viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">${S.bgx}${aurS}${weather(S)}<path d="${hp}" fill="${hill}"/><path d="${hp}" fill="#000" opacity=".06"/>${fence}${S.xm?Array.from({length:17},(_,i)=>tw(i*24+6,246,LC[i%4],2.5,i)).join(""):""}<g transform="translate(0,-44)">${t3}${S.treeL}${S.treeR}</g><path d="M0 262q100-12 200-4t200-6v90H0z" fill="${S.gr}"/>${fl}
+<rect x="54" y="282" width="52" height="6" fill="#8a5a2a"/><rect x="54" y="270" width="52" height="5" fill="#8a5a2a"/><path d="M58 288v10M102 288v10M58 270v12M102 270v12" stroke="#6b4a32" stroke-width="3"/>${S.w==="snow"?`<rect x="54" y="267" width="52" height="3" fill="#fff"/><rect x="54" y="279" width="52" height="3" fill="#fff"/>`:""}
+<rect x="139" y="250" width="3" height="48" fill="#6b4a32"/><path d="M126 252l15-12 15 12z" fill="#b5532a"/><rect x="130" y="252" width="22" height="9" fill="#d9a066"/><rect x="132" y="260" width="18" height="3" fill="#6b4a32"/><g><animateTransform attributeName="transform" type="translate" values="0 0;0 -2;0 0" dur="1.3s" repeatCount="indefinite"/><ellipse cx="146" cy="258" rx="3.5" ry="3" fill="#a8672a"/><circle cx="148" cy="256" r="1.9" fill="#a8672a"/><circle cx="147" cy="259" r="1.5" fill="#e8662a"/><path d="M149.8 256l2 .6-2 .6z" fill="#e8a33d"/></g>
+${pud}${S.w==="snow"?snowman(215,300)+snowman(340,314):""}
+<g id="gboard" style="cursor:pointer"><path d="M268 212l39-14 39 14z" fill="#8a5a2a"/><rect x="272" y="212" width="70" height="50" rx="3" fill="#c79a5b" stroke="#6b4a32" stroke-width="3"/>${notes}<rect x="278" y="258" width="4" height="30" fill="#6b4a32"/><rect x="332" y="258" width="4" height="30" fill="#6b4a32"/></g>
+${S.gh?pump(30,322,1.1)+pump(360,325,1.3)+pump(210,330,.9)+ghost(30,150,4)+ghost(340,120,5)+ghost(190,95,6):""}</svg>
+<div class="hav" style="left:11%;bottom:13%;width:11%">${ava(profile.av,null,false)}</div>`
+ +ps.map((t,i)=>{const fl2=FLY.includes(t),col=t===cp?profile.pet.color:NAT[t];return `<div class="gpet" data-t="${t}" style="left:${8+(i*37)%78}%;bottom:${fl2?30+(i*7)%25:4+(i*5)%16}%"><div class="pf"><div class="pb"><svg viewBox="76 16 48 64">${petSVG({type:t,color:col})}</svg></div></div></div>`}).join("");
+ gWander()}
+function gWander(){clearTimeout(gT);if(!$("garden").classList.contains("hide"))document.querySelectorAll(".gpet").forEach(el=>{if(Math.random()<.45)return;
+  const t=+el.dataset.t,fl=FLY.includes(t),nx=5+Math.random()*80,ny=fl&&Math.random()<.75?30+Math.random()*30:4+Math.random()*16,x0=parseFloat(el.style.left),y0=parseFloat(el.style.bottom),d=Math.hypot(nx-x0,(ny-y0)*1.2)*(fl?.06:.1)+.6,pb=el.querySelector(".pb"),c=fl?"fly":"walk";
+  el.querySelector(".pf").style.transform=`scaleX(${nx>x0?1:-1})`;pb.classList.add(c);el.style.transitionDuration=d+"s";el.style.left=nx+"%";el.style.bottom=ny+"%";setTimeout(()=>pb.classList.remove(c),d*1000)});
+ gT=setTimeout(gWander,2200)}
+function showGarden(){$("home").classList.add("hide");$("garden").classList.remove("hide");renderGarden()}
+$("gscene").onclick=e=>{if(e.target.closest("#gboard")){openCh();return}
+ const p=e.target.closest(".gpet"),a=e.target.closest(".hav");
+ if(p){const t=+p.dataset.t;hop(p.querySelector(".pb"));play(t);say(p,TXT[t])}else if(a){hop(a);say(a,LINES[Math.floor(Math.random()*LINES.length)])}};
+$("hgar").onclick=showGarden;$("gcab").onclick=showHome;$("gopen").onclick=showPokedex;$("gchal").onclick=openCh;$("hch").onclick=openCh;$("gadd").onclick=()=>$("add").click();["chM"].forEach(id=>$(id).onclick=e=>{if(e.target.id===id)e.target.classList.remove("open")});
+const NEWACC=[`<path d="M21 31a19 17 0 0138 0z" fill="#c8372d"/><rect x="21" y="29" width="38" height="5" rx="2" fill="#a52a22"/><circle cx="40" cy="14" r="4" fill="#fff"/>`,`<path d="M28 58q12 8 24 0l1 6q-13 8-26 0z" fill="#e0a526"/><path d="M48 62l4 14 5-2-3-13z" fill="#c8372d"/>`,`<rect x="27" y="35" width="11" height="7" rx="3" fill="#222"/><rect x="42" y="35" width="11" height="7" rx="3" fill="#222"/><path d="M38 38h4" stroke="#222"/>`,`<path d="M30 62l-4 18M50 62l4 18" stroke="#8a5a2a" stroke-width="3"/><rect x="58" y="64" width="9" height="14" rx="3" fill="#7a8f3a"/>`,`<path d="M18 44a22 24 0 0144 0v8q-5-12-22-12t-22 12z" fill="#f5c542"/>`,`<ellipse cx="40" cy="28" rx="26" ry="5" fill="#c9a15a"/><path d="M26 28a14 13 0 0128 0z" fill="#b8894a"/><rect x="26" y="25" width="28" height="3" fill="#6b4a32"/>`];
+/* sightings map */
+let LM=null;
+const ICO={Fauna:"🐾",Flora:"🌿",Fungi:"🍄"};
+function loadLeaflet(){return new Promise((res,rej)=>{if(window.L&&window.__lcss)return res();let n=0;const ok=()=>{if(++n==2){window.__lcss=1;res()}};
+ const l=document.createElement("link");l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";l.onload=ok;l.onerror=rej;document.head.appendChild(l);
+ if(window.L)return ok();const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";s.onload=ok;s.onerror=rej;document.head.appendChild(s)})}
+function mapPopup(it){return `<div style="width:130px"><img src="${it.img}" alt="" style="width:100%;border-radius:8px;display:block;margin-bottom:4px"><b>${esc(it.name)}</b>${it.latin?`<br><i>${esc(it.latin)}</i>`:""}<br>${esc(fmtDate(it.date))}${it.place?" · "+esc(it.place):""}</div>`}
+function plot(c,pts){const la=pts.map(p=>p.lat),lo=pts.map(p=>p.lng),k=Math.cos(la[0]*Math.PI/180),x0=Math.min(...lo),x1=Math.max(...lo),y0=Math.min(...la),y1=Math.max(...la),W=300,H=220,sc=Math.min(260/Math.max((x1-x0)*k,1e-4),170/Math.max(y1-y0,1e-4),5e4);
+ c.innerHTML=`<p class="meta">Couldn’t load the map (offline?) – here’s a simple plot of your sightings instead.</p><svg viewBox="0 0 ${W} ${H}" style="width:100%;background:var(--chip);border-radius:12px;color:var(--ink)">`+pts.map(p=>{const x=W/2+(p.lng-(x0+x1)/2)*k*sc,y=H/2-(p.lat-(y0+y1)/2)*sc;return `<circle cx="${x}" cy="${y}" r="5" fill="var(--green)"/><text x="${x}" y="${y+12}" font-size="7" text-anchor="middle" fill="currentColor">${esc(p.name)}</text>`}).join("")+`</svg>`}
+async function openMap(){$("mapM").classList.add("open");
+ const ms=it=>(fRegion==="All"||it.region===fRegion)&&(fKind==="All"||it.kind===fKind)&&(!fSub||it.sub===fSub)&&(!q||[it.name,it.latin,it.notes,it.place,it.sub,it.kind,it.region].join(" ").toLowerCase().includes(q)),
+  pts=items.filter(it=>it.lat!=null&&ms(it)),c=$("mapC");
+ $("mapT").textContent=`🗺 ${pts.length} of ${items.length} sightings on the map`+(fRegion!=="All"||fKind!=="All"||q?" (filters applied)":"");
+ if(LM){LM.remove();LM=null}
+ if(!pts.length){c.innerHTML='<div class="empty">No sightings with a GPS location yet – allow location when you log a sighting and it will appear here.</div>';return}
+ try{await loadLeaflet();c.innerHTML="";LM=L.map(c);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(LM);
+  const g=L.featureGroup(pts.map(it=>L.marker([it.lat,it.lng],{icon:L.divIcon({html:`<div class="mk">${ICO[it.kind]||"📍"}</div>`,className:"",iconSize:[30,30]})}).bindPopup(mapPopup(it)))).addTo(LM);
+  LM.fitBounds(g.getBounds().pad(.25),{maxZoom:15});setTimeout(()=>LM&&LM.invalidateSize(),250)}
+ catch(e){if(LM){LM.remove();LM=null}plot(c,pts)}}
+$("mapbtn").onclick=$("hmap").onclick=openMap;$("mapX").onclick=()=>$("mapM").classList.remove("open");$("mapM").onclick=e=>{if(e.target.id==="mapM")e.target.classList.remove("open")};
+
+/* ranks, eggs, new pets */
+const RK=["Rookie Ecologist","Intern Ecologist","Assistant Ecologist","Junior Ecologist","Senior Ecologist","Chief Ecologist","Dr. in Ecology","Professor in Ecology","Darwin’s Prodigy"],RT=[0,5,15,30,55,90,140,210,300];
+const EGG=[1,10,20,30,45,60,80,100,125,150,180],EGO=[5,13,0,4,1,9,2,11,3,12,10],FLY=[3,8,9,10,16],ORD=[6,7,8,0,1,2,3,4,5,9,10,11,12,13,14,15,16],NAT=[1,3,2,1,5,0,3,1,1,3,1,3,1,1,0,1,0];
+const lvOf=n=>{let l=0;RT.forEach((t,i)=>{if(n>=t)l=i});return l};
+const hatchedN=()=>EGG.filter(f=>f+5<=(profile.hi||0)).length;
+const isOpen=t=>[6,7,8].includes(t)||EGO.slice(0,hatchedN()).includes(t)||(BONUS.includes(t)&&BONUS.indexOf(t)<bH());
+function eggInfo(){const hi=profile.hi||0,h=hatchedN();if(h>=EGG.length)return{all:1};const f=EGG[h];return hi>=f?{found:1,left:f+5-hi,prog:hi-f,idx:h}:{found:0,need:f-hi,idx:h}}
+function eggDraw(E){if(!E.found)return"";const c=PC[(E.idx+1)%6],cr=E.prog>=3?`<path d="M148 292l3 3-3 3 4 3" stroke="#0008" fill="none"/>`+(E.prog>=4?`<path d="M156 296l-3 3 3 3" stroke="#0008" fill="none"/>`:""):"";
+ return `<g id="egg" style="cursor:pointer"><ellipse cx="152" cy="309" rx="15" ry="5" fill="#c9a15a"/><path d="M139 307l-5-2M165 307l5-2M144 311l-3 2M160 311l3 2" stroke="#a87c3a"/><g class="eggw"><ellipse cx="152" cy="299" rx="8" ry="10.5" fill="#f6efe0" stroke="#0003"/><circle cx="149" cy="296" r="1.4" fill="${c}"/><circle cx="155" cy="302" r="1.8" fill="${c}"/><circle cx="150" cy="304" r="1.2" fill="${c}"/>${cr}</g></g>`}
+function setLv(E){const hi=profile.hi||0,P=hi+(profile.xp||0),L=lvOf(P),nx=RT[L+1],cur=RT[L],pl=n=>n+" sighting"+(n==1?"":"s");
+ const h=`<b>🎖 ${RK[L]}</b> · ${P} pts (${pl(hi)})`+(nx?` · ${nx-P} to next rank<div class="bar"><i style="width:${(P-cur)/(nx-cur)*100}%"></i></div>`:" · top rank!")+`<div>🥚 `+(E.all?"All pets hatched!":E.found?`Egg hatches after ${pl(E.left)} more`:hi?`Next egg found at ${EGG[E.idx]} sightings (${E.need} to go)`:"Add your first species to find an egg!")+`</div>`+bonusLine();
+ $("hlv").innerHTML=h;$("glv").innerHTML=h}
+function sayAt(t,l){const b=document.createElement("div");b.className="bub";b.style.cssText="left:"+(l||37.5)+"%;bottom:22%;z-index:6";b.textContent=t;$("scene").appendChild(b);setTimeout(()=>b.remove(),2200)}
+function petBtns(cur){return `<div class="sw">`+ORD.map(v=>{const o=isOpen(v);return `<button class="btn sm ${v===cur?"p":""}" data-g="pet" data-k="type" data-v="${v}" ${o?"":"disabled style=\"opacity:.45\""}>${o?"":"🔒 "}${OPT.pet[v]}</button>`}).join("")+`</div><p class="meta">🥚 Log sightings to find and hatch eggs – each one unlocks a new pet. Win a monthly challenge for a golden bonus egg (🐐).</p>`}
+const EVQ=[];
+function checkEvents(){const p=profile;if(items.length>(p.hi||0)){p.hi=items.length;saveProfile()}
+ const hi=p.hi||0,L=lvOf(hi+(p.xp||0)),H=hatchedN(),F=EGG.filter(f=>f<=hi).length;
+ if(p.lv===undefined){p.lv=L;p.celeb=H;p.fcel=F;saveProfile();return}
+ let ch=0;if(F>p.fcel){EVQ.push({k:"found",i:F-1});p.fcel=F;ch=1}
+ if(H>p.celeb){for(let i=p.celeb;i<H;i++)EVQ.push({k:"hatch",i});p.celeb=H;ch=1}
+ periods().forEach(P=>{const n=prog(P.c,P.a,P.b);if(n>=P.c.g&&!(p.done||[]).includes(P.k)){p.done=(p.done||[]).concat(P.k).slice(-200);p.xp=(p.xp||0)+P.xp;ch=1;let r="";
+  if(P.l==="Weekly"){const nx=CLOTH.find(i=>!(p.cloth||[]).includes(i));if(nx!==undefined){p.cloth=(p.cloth||[]).concat(nx);r="New clothing: "+OPT.acc[nx]}}
+  else if(P.l==="Monthly"&&(p.beggs||[]).length<BONUS.length){bonusAdd(hi);r="🌟 Golden bonus egg!"}
+  EVQ.push({k:"chal",l:P.l,t:P.c.t,xp:P.xp,r})}});
+ const L2=lvOf(hi+(p.xp||0));if(L2>p.lv){EVQ.push({k:"promo",i:L2});p.lv=L2;ch=1}
+ if(p.bonus!==undefined&&!p.beggs){p.beggs=[p.bonus];p.bh=p.bdone?1:0;delete p.bonus}
+ const wm=prevMonthWin();if(wm){p.won=(p.won||[]).concat(wm);if((p.beggs||[]).length<BONUS.length){bonusAdd(hi);EVQ.push({k:"bfound",i:9})}ch=1}
+ const BH=bH();if(BH>(p.bh||0)){for(let i=p.bh||0;i<BH;i++)EVQ.push({k:"bhatch",i:9,b:i});p.bh=BH;ch=1}
+ if(ch)saveProfile();showEv()}
+function showEv(){if(!EVQ.length||$("evM").classList.contains("open"))return;const e=EVQ.shift(),box=$("ev"),ot=e.k==="bhatch"?BONUS[e.b]:EGO[e.i],done=()=>{$("evM").classList.remove("open");setTimeout(showEv,300)},
+ btn=t=>`<div class="actions" style="justify-content:center"><button class="btn p" id="evok">${t}</button></div>`,
+ eggS=c=>`<svg viewBox="0 0 40 50"><ellipse cx="20" cy="28" rx="15" ry="19" fill="#f6efe0" stroke="#0003"/><circle cx="14" cy="22" r="2.4" fill="${c}"/><circle cx="25" cy="31" r="3" fill="${c}"/><circle cx="17" cy="37" r="2" fill="${c}"/><circle cx="26" cy="19" r="1.8" fill="${c}"/></svg>`;
+ if(e.k==="hatch"||e.k==="bhatch"){box.innerHTML=`<h2 id="evh">🥚 Your egg is hatching…</h2><div id="evp" class="shake" style="width:120px;margin:8px auto">${eggS(PC[(e.i+1)%6])}</div><p class="meta" id="evt"></p><div id="eva"></div>`;$("evM").classList.add("open");
+  setTimeout(()=>{if(!$("evp"))return;$("evh").textContent="🎉 It hatched!";$("evp").className="";$("evp").innerHTML=`<svg viewBox="76 16 48 64">${petSVG({type:ot,color:NAT[ot]})}</svg>`;$("evt").textContent=`A ${OPT.pet[ot]} joined your cabin! Choose it in 🎨 Customise.`;$("eva").innerHTML=btn("Awesome!");$("evok").onclick=done},1600);return}
+ if(e.k==="chal"){box.innerHTML=`<h2>🏆 ${e.l} challenge complete!</h2><p><b>${esc(e.t)}</b></p><p>+${e.xp} points${e.r?" · "+e.r:""}</p>`+btn("Nice!");$("evok").onclick=done;$("evM").classList.add("open");return}
+ if(e.k==="bfound"){box.innerHTML=`<h2>🏆 You won last month’s challenge!</h2><div style="width:90px;margin:8px auto">${eggS("#d4a017")}</div><p class="meta">A golden bonus egg appeared in your cabin. It hatches after 5 more sightings.</p>`+btn("Brilliant!");$("evok").onclick=done;$("evM").classList.add("open");return}
+ box.innerHTML=e.k==="found"?`<h2>🥚 You found an egg!</h2><div style="width:90px;margin:8px auto">${eggS(PC[(e.i+1)%6])}</div><p class="meta">It’s keeping warm in your cabin and will hatch after 5 more sightings.</p>`+btn("Great!"):`<h2>🎖 Promotion!</h2><div style="width:150px;margin:8px auto">${ava(profile.av,profile.pet,true)}</div><p>You’re now a <b>${RK[e.i]}</b>!</p>`+btn("Onwards!");
+ $("evok").onclick=done;$("evM").classList.add("open")}
+SND.push([[0,1800,2400,.06,"sine",.15],[.1,2000,2600,.06,"sine",.15]],[[0,900,700,.05,"square",.12],[.08,900,700,.05,"square",.12],[.16,900,700,.05,"square",.12],[.24,900,700,.05,"square",.12]],[[0,2600,3400,.1,"sine",.2],[.14,3400,2800,.1,"sine",.2],[.3,2600,3600,.14,"sine",.2]],[[0,500,300,.25,"sawtooth",.25],[.35,500,300,.25,"sawtooth",.25]],[[0,2000,1400,.5,"sawtooth",.15]],[[0,110,90,.4,"sawtooth",.3]],[[0,300,420,.35,"triangle",.3]],[[0,200,300,.08,"square",.1],[.12,220,320,.08,"square",.1],[.24,200,300,.1,"square",.1]]);
+TXT.push("Eek!","Chit-chit!","Tweet!","Caw caw!","Skreee!","Grunt!","Snort!","Snuffle!");
+const BONUS=[14,15,16],CLOTH=[4,5,6,7,8,9];
+const bH=()=>(profile.beggs||[]).filter(f=>f+5<=(profile.hi||0)).length;
+function bonusAdd(hi){const b=profile.beggs||(profile.beggs=[]);if(b.length<BONUS.length)b.push(hi)}
+function bonusLine(){const h=profile.hi||0,r=(profile.beggs||[]).filter(f=>f+5>h).map(f=>f+5-h);return r.length?`<div>🌟 Bonus egg hatches after ${Math.min(...r)} more sighting${Math.min(...r)>1?"s":""}</div>`:""}
+function bonusDraw(){const h=profile.hi||0;return (profile.beggs||[]).filter(f=>f+5>h).slice(0,3).map((f,i)=>{const x=[118,96,74][i];return `<g id="egg2" style="cursor:pointer"><ellipse cx="${x}" cy="311" rx="12" ry="4" fill="#c9a15a"/><g class="eggw"><ellipse cx="${x}" cy="301" rx="7.5" ry="10" fill="#f5d442" stroke="#b8860b"/><path d="M${x-5} 298l2-3 2 3-2 3zM${x+2} 305l2-3 2 3-2 3z" fill="#fff" opacity=".8"/></g></g>`}).join("")}
+function prevMonthWin(){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);const m=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+ if((profile.won||[]).includes(m)||!friends.length)return null;const me=score(items,m);return me>0&&friends.every(f=>me>=score(f.items,m))?m:null}
+SND.push([[0,420,300,.2,"sawtooth",.18],[.22,380,430,.28,"sawtooth",.18]],[[0,1300,1700,.1,"sine",.2],[.14,1500,1100,.12,"sine",.2]],[[0,3000,3600,.08,"square",.1],[.12,3000,3600,.08,"square",.1]]);TXT.push("Maaa!","Chirp!","Peep!");
+const e2=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#222"/><circle cx="${x+.6}" cy="${y-.7}" r=".7" fill="#fff"/>`;
+function bird(b,o){return `<g transform="translate(95 76) scale(${o.s}) translate(-95 -76)"><path d="M104 70l9 7-4-9z" fill="${o.tail||b}"/><ellipse class="wg" cx="82" cy="62" rx="5" ry="10" fill="${b}" stroke="#0003"/><ellipse class="wg" cx="108" cy="62" rx="5" ry="10" fill="${b}" stroke="#0003"/><ellipse cx="95" cy="63" rx="13" ry="13" fill="${b}"/><ellipse cx="95" cy="67" rx="9" ry="9.5" fill="${o.br||b}"/><circle cx="95" cy="48" r="10" fill="${o.hd||b}"/>${o.face?`<circle cx="95" cy="50" r="6.5" fill="${o.face}"/>`:""}${e2(91,47,1.7)}${e2(99,47,1.7)}${o.eagle?`<path d="M88 44q4 2 6 0M96 44q2 2 6 0" stroke="#3a2a10" fill="none" stroke-width="1.4"/>`:""}<path d="${o.beak}" fill="${o.bc}"/><path d="M91 76v3M99 76v3" stroke="${o.lg||"#b9783a"}" stroke-width="1.6"/></g>`}
+function pet2(t,b){const dk="#0003",pn="#f2a0a8",paws=`<ellipse cx="88" cy="76" rx="4.5" ry="2.6" fill="${b}" stroke="${dk}"/><ellipse cx="102" cy="76" rx="4.5" ry="2.6" fill="${b}" stroke="${dk}"/>`;
+ if(t==0)return `<path d="M108 68q12-4 8-16" stroke="${b}" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="95" cy="66" rx="14" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="69" rx="8" ry="6.5" fill="#fff" opacity=".5"/>${paws}<path d="M85 58q10 6 20 0" stroke="#d9453a" stroke-width="2.2" fill="none"/><circle cx="95" cy="62.5" r="1.8" fill="#f5c542"/><circle cx="95" cy="49" r="11.5" fill="${b}" stroke="${dk}"/><path d="M85 40q-9 3-7 15 3 4 7-3zM105 40q9 3 7 15-3 4-7-3z" fill="${b}" stroke="${dk}"/><path d="M85 40q-9 3-7 15 3 4 7-3zM105 40q9 3 7 15-3 4-7-3z" fill="#000" opacity=".22"/><ellipse cx="95" cy="54" rx="6.5" ry="5" fill="#f2e4cc"/>${e2(90.5,46,1.9)}${e2(99.5,46,1.9)}<ellipse cx="95" cy="51.5" rx="2.6" ry="2" fill="#222"/><path d="M95 53.5v2M91.5 56q3.5 2.5 3.5-.5 0 3 3.5.5" stroke="#222" fill="none" stroke-width=".7"/><path d="M94 57q1 5 3.5 0z" fill="#f08a96"/>`;
+ if(t==1)return `<path d="M108 68q16-2 10-24" stroke="${b}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M115 60l4-1M116 52l4-1" stroke="#0004" stroke-width="1.4"/><ellipse cx="95" cy="66" rx="13" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="69" rx="7" ry="6" fill="#fff" opacity=".5"/>${paws}<path d="M85 41l-2-14 9 7zM105 41l2-14-9 7z" fill="${b}" stroke="${dk}"/><path d="M85 38l-1-8 5 4zM105 38l1-8-5 4z" fill="${pn}"/><circle cx="95" cy="49" r="11.5" fill="${b}" stroke="${dk}"/><path d="M95 38v5M91 39l1 4M99 39l-1 4" stroke="#0004" stroke-width="1.2"/><ellipse cx="95" cy="54" rx="6" ry="4.5" fill="#fff" opacity=".6"/><ellipse cx="90.5" cy="47" rx="2.4" ry="2.7" fill="#a8d86a"/><ellipse cx="99.5" cy="47" rx="2.4" ry="2.7" fill="#a8d86a"/><ellipse cx="90.5" cy="47" rx=".8" ry="2.3" fill="#222"/><ellipse cx="99.5" cy="47" rx=".8" ry="2.3" fill="#222"/><path d="M93.5 51.5h3l-1.5 2z" fill="${pn}"/><path d="M95 53.5v1.5M92.5 56q2.5 1.5 2.5-1.5 0 3 2.5 1.5" stroke="#222" fill="none" stroke-width=".7"/><path d="M86 52h-7M86 54l-6 2M104 52h7M104 54l6 2" stroke="#222" stroke-width=".5" opacity=".7"/><path d="M86 59q9 5 18 0" stroke="#3b6fd4" stroke-width="2" fill="none"/><circle cx="95" cy="62.5" r="1.8" fill="#f5c542"/>`;
+ if(t==2)return `<path d="M108 68q18 0 14-18-6 8-14 10z" fill="${b}" stroke="${dk}"/><path d="M122 50q-3 4-6 6l6 2z" fill="#fff"/><ellipse cx="95" cy="66" rx="13" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="7" ry="7" fill="#fff"/><ellipse cx="87" cy="76" rx="4.5" ry="2.6" fill="#2a2018"/><ellipse cx="103" cy="76" rx="4.5" ry="2.6" fill="#2a2018"/><path d="M85 41l-3-19 11 10zM105 41l3-19-11 10z" fill="${b}" stroke="${dk}"/><path d="M85 38l-2-11 7 6zM105 38l2-11-7 6z" fill="#2a2018"/><circle cx="95" cy="49" r="11.5" fill="${b}" stroke="${dk}"/><path d="M84 50q11 14 22 0-1 9-11 12-10-3-11-12z" fill="#fff"/>${e2(90.5,46,1.8)}${e2(99.5,46,1.8)}<path d="M87 43l5 1.5M103 43l-5 1.5" stroke="#2a2018" stroke-width=".9"/><ellipse cx="95" cy="58" rx="2.4" ry="1.8" fill="#222"/><path d="M95 59.5v1.5M92.5 62q2.5 1.5 2.5-1.5 0 3 2.5 1.5" stroke="#222" fill="none" stroke-width=".6"/>`;
+ if(t==3)return `<ellipse class="wg" cx="82" cy="62" rx="5" ry="10" fill="${b}" stroke="${dk}"/><ellipse class="wg" cx="108" cy="62" rx="5" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="64" rx="13" ry="13" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="66" rx="9" ry="10" fill="#f4ead4" opacity=".8"/><path d="M89 62q3 3 6 0 3 3 6 0M89 68q3 3 6 0 3 3 6 0M90 74q2.5 2.5 5 0 2.5 2.5 5 0" stroke="#0004" fill="none"/><path d="M91 77v2M99 77v2" stroke="#c98a2b" stroke-width="1.6"/><path d="M86 40l-3-10 9 5zM104 40l3-10-9 5z" fill="${b}" stroke="${dk}"/><circle cx="95" cy="48" r="11" fill="${b}" stroke="${dk}"/><circle cx="90" cy="48" r="5.8" fill="#f4ead4"/><circle cx="100" cy="48" r="5.8" fill="#f4ead4"/><circle cx="90" cy="48" r="3.6" fill="#f2b630"/><circle cx="100" cy="48" r="3.6" fill="#f2b630"/>${e2(90,48,1.8)}${e2(100,48,1.8)}<path d="M85 42q5-3 9 1M105 42q-5-3-9 1" stroke="#0005" fill="none"/><path d="M95 50l-2.2 4 2.2 2 2.2-2z" fill="#c98a2b"/>`;
+ if(t==4)return `<ellipse cx="82" cy="70" rx="6" ry="5" fill="${b}" stroke="${dk}"/><ellipse cx="108" cy="70" rx="6" ry="5" fill="${b}" stroke="${dk}"/><path d="M76 77l-3 1M80 77v2M84 77l1 1M106 77l1 1M110 77v2M114 77l3 1" stroke="${b}" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="95" cy="66" rx="14" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="69" rx="9" ry="6.5" fill="#f1ecc8"/><g fill="#000" opacity=".2"><circle cx="86" cy="62" r="2"/><circle cx="100" cy="60" r="2.4"/><circle cx="106" cy="66" r="1.8"/><circle cx="92" cy="58" r="1.6"/></g><ellipse cx="88" cy="76" rx="4" ry="2.2" fill="${b}" stroke="${dk}"/><ellipse cx="102" cy="76" rx="4" ry="2.2" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="52" rx="12.5" ry="8.5" fill="${b}" stroke="${dk}"/><circle cx="87" cy="43" r="5.5" fill="${b}" stroke="${dk}"/><circle cx="103" cy="43" r="5.5" fill="${b}" stroke="${dk}"/><circle cx="87" cy="43" r="3.6" fill="#e8c547"/><circle cx="103" cy="43" r="3.6" fill="#e8c547"/><ellipse cx="87" cy="43" rx="2.4" ry="1.2" fill="#222"/><ellipse cx="103" cy="43" rx="2.4" ry="1.2" fill="#222"/><circle cx="87.8" cy="42" r=".7" fill="#fff"/><circle cx="103.8" cy="42" r=".7" fill="#fff"/><circle cx="93" cy="50" r=".7" fill="#222"/><circle cx="97" cy="50" r=".7" fill="#222"/><path d="M84 54q11 7 22 0" stroke="#222" fill="none" stroke-width=".9"/><circle cx="85" cy="54" r="2" fill="${pn}" opacity=".4"/><circle cx="105" cy="54" r="2" fill="${pn}" opacity=".4"/>`;
+ if(t==5)return `<circle cx="109" cy="69" r="4.5" fill="#fff" stroke="${dk}"/><ellipse cx="95" cy="66" rx="13" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="69" rx="7" ry="6" fill="#fff" opacity=".5"/>${paws}<ellipse cx="89" cy="29" rx="3.8" ry="12" fill="${b}" stroke="${dk}" transform="rotate(-6 89 40)"/><ellipse cx="101" cy="29" rx="3.8" ry="12" fill="${b}" stroke="${dk}" transform="rotate(8 101 40)"/><ellipse cx="89" cy="30" rx="1.8" ry="8" fill="${pn}" transform="rotate(-6 89 40)"/><ellipse cx="101" cy="30" rx="1.8" ry="8" fill="${pn}" transform="rotate(8 101 40)"/><circle cx="95" cy="50" r="11" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="54" rx="6" ry="4.5" fill="#fff" opacity=".55"/>${e2(90,47,2)}${e2(100,47,2)}<path d="M93.5 51h3l-1.5 2z" fill="${pn}"/><path d="M95 53v2M92.5 56q2.5 1.5 2.5-1.5 0 3 2.5 1.5" stroke="#222" fill="none" stroke-width=".7"/><path d="M94 56h2v3h-2z" fill="#fff" stroke="${dk}" stroke-width=".4"/><path d="M86 52h-7M86 54l-6 2M104 52h7M104 54l6 2" stroke="#222" stroke-width=".5" opacity=".6"/><circle cx="85.5" cy="53" r="2" fill="${pn}" opacity=".4"/><circle cx="104.5" cy="53" r="2" fill="${pn}" opacity=".4"/>`;
+ if(t==14)return `<path d="M89 38q-6-10-2-16M101 38q6-10 2-16" stroke="#b7a98a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M109 62l4-5" stroke="${b}" stroke-width="3" stroke-linecap="round"/><ellipse cx="95" cy="65" rx="15" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="8" ry="6" fill="#fff" opacity=".4"/><path d="M84 70v8M90 72v6M100 72v6M106 70v8" stroke="${b}" stroke-width="3" stroke-linecap="round"/><path d="M84 78v1M90 78v1M100 78v1M106 78v1" stroke="#2a2018" stroke-width="3"/><rect x="91" y="44" width="8" height="14" fill="${b}"/><ellipse cx="95" cy="46" rx="8" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="81" cy="43" rx="7" ry="2.8" fill="${b}" stroke="${dk}" transform="rotate(15 81 43)"/><ellipse cx="109" cy="43" rx="7" ry="2.8" fill="${b}" stroke="${dk}" transform="rotate(-15 109 43)"/><ellipse cx="95" cy="54" rx="4.8" ry="3.8" fill="#efe6d5" stroke="${dk}"/><circle cx="93.5" cy="54" r=".6" fill="#222"/><circle cx="96.5" cy="54" r=".6" fill="#222"/><ellipse cx="90.5" cy="44" rx="2.4" ry="2.1" fill="#e8c547"/><ellipse cx="99.5" cy="44" rx="2.4" ry="2.1" fill="#e8c547"/><rect x="89.3" y="43.4" width="2.4" height="1.2" fill="#222"/><rect x="98.3" y="43.4" width="2.4" height="1.2" fill="#222"/><path d="M92 57l3 10 3-10z" fill="${b}" stroke="${dk}"/>`;
+ if(t==15)return `<path d="M108 70q14 2 14-6 0-4-4-6" stroke="${b}" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="95" cy="66" rx="14" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="9" ry="7" fill="#e8d5b0"/><path d="M89 69q6-4 12 0-6 4-12 0z" fill="#9fb8c9"/><path d="M101 69l4-3v6z" fill="#9fb8c9"/>${paws}<circle cx="86" cy="42" r="3.2" fill="${b}" stroke="${dk}"/><circle cx="104" cy="42" r="3.2" fill="${b}" stroke="${dk}"/><circle cx="95" cy="50" r="10.5" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="55" rx="7.5" ry="5.5" fill="#e8d5b0"/>${e2(90,47,1.7)}${e2(100,47,1.7)}<path d="M92.5 51.5h5l-2.5 3z" fill="#222"/><path d="M95 54.5v1.5M92.5 57q2.5 1.5 2.5-1.5 0 3 2.5 1.5" stroke="#222" fill="none" stroke-width=".6"/><path d="M86 54h-8M86 56l-7 2M104 54h8M104 56l7 2" stroke="#222" stroke-width=".5" opacity=".7"/>`;
+ if(t==16)return bird("#2a9fd6",{br:"#e8872a",face:"#e8872a",beak:"M93 50h4l-2 10z",bc:"#222",s:.9,tail:"#2a9fd6"});
+ if(t==8)return bird(b,{br:"#e8662a",face:"#e8662a",beak:"M93 50h4l-2 4z",bc:"#4a3b2a",s:.9});
+ if(t==9)return bird(b,{beak:"M91 50h8l-4 10z",bc:"#222",s:1.05});
+ if(t==10)return bird(b,{hd:"#f6f3ea",tail:"#f6f3ea",eagle:1,beak:"M89 49h12q0 7-6 10-6-3-6-10z",bc:"#f1c232",lg:"#f1c232",s:1.2});
+ if(t==6)return `<path d="M108 70q14 0 12-13" stroke="${pn}" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="95" cy="67" rx="13" ry="9" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="69" rx="8" ry="6" fill="#fff" opacity=".4"/>${paws}<circle cx="85" cy="44" r="6.5" fill="${b}" stroke="${dk}"/><circle cx="105" cy="44" r="6.5" fill="${b}" stroke="${dk}"/><circle cx="85" cy="44" r="4" fill="${pn}"/><circle cx="105" cy="44" r="4" fill="${pn}"/><ellipse cx="95" cy="53" rx="10" ry="9.5" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="57" rx="5" ry="4" fill="#fff" opacity=".45"/>${e2(90,51,1.7)}${e2(100,51,1.7)}<circle cx="95" cy="56" r="1.6" fill="${pn}"/><path d="M93 59h4l-.5 2.5h-3z" stroke="#222" stroke-width=".5" fill="#fff"/><path d="M88 56h-8M88 58l-7 2M102 56h8M102 58l7 2" stroke="#222" stroke-width=".4" opacity=".6"/>`;
+ if(t==7)return `<path d="M106 72q24-2 14-32-2 12-14 18z" fill="${b}" stroke="${dk}"/><path d="M110 62q8-6 6-16M108 68q10-4 10-14" stroke="#0003" fill="none"/><ellipse cx="95" cy="66" rx="12" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="7" ry="7" fill="#f6ead2"/>${paws}<path d="M85 42l-1-8 7 5zM105 42l1-8-7 5z" fill="${b}"/><circle cx="95" cy="50" r="10.5" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="54" rx="7" ry="5.5" fill="#f6ead2"/>${e2(90.5,48,1.9)}${e2(99.5,48,1.9)}<circle cx="95" cy="52" r="1.5" fill="#222"/><path d="M95 53.5v1.5M92.6 56q2.4 1.6 2.4-1.5 0 3.1 2.4 1.5" stroke="#222" fill="none" stroke-width=".7"/><circle cx="85" cy="54" r="2" fill="${pn}" opacity=".4"/><circle cx="105" cy="54" r="2" fill="${pn}" opacity=".4"/><ellipse cx="95" cy="71" rx="3" ry="3.6" fill="#8a5a2a"/><path d="M95 67.5v-2" stroke="#4a7a2a" stroke-width="1.5"/>`;
+ if(t==11)return `<path d="M108 70q6 0 7 4" stroke="${b}" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="95" cy="66" rx="16" ry="10.5" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="9" ry="6" fill="#222" opacity=".35"/><ellipse cx="86" cy="76" rx="5" ry="2.8" fill="#222"/><ellipse cx="104" cy="76" rx="5" ry="2.8" fill="#222"/><path d="M82 77l-1 2M86 78l-1 2M104 78l1 2M108 77l1 2" stroke="#eee" stroke-width=".8"/><circle cx="86" cy="43" r="4.5" fill="#222"/><circle cx="104" cy="43" r="4.5" fill="#222"/><circle cx="86" cy="42" r="2" fill="#fff"/><circle cx="104" cy="42" r="2" fill="#fff"/><path d="M95 38c-9 0-12 8-11 14l3 6h16l3-6c1-6-2-14-11-14z" fill="#f4f1ea" stroke="${dk}"/><path d="M88 41q-3 8 2 15h3q-3-7-1-15zM102 41q3 8-2 15h-3q3-7 1-15z" fill="#222"/><circle cx="91" cy="48" r="1.6" fill="#fff"/><circle cx="99" cy="48" r="1.6" fill="#fff"/><ellipse cx="95" cy="56" rx="2.6" ry="2" fill="#222"/>`;
+ if(t==12)return `<path d="M91 36l-5-12M91 31l-6-3M99 36l5-12M99 31l6-3M86 24l-1-6M104 24l1-6" stroke="#6b4a32" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="95" cy="64" rx="15" ry="10" fill="${b}" stroke="${dk}"/><ellipse cx="95" cy="68" rx="8" ry="6" fill="#f6ead2"/><g fill="#fff" opacity=".7"><circle cx="86" cy="60" r="1.3"/><circle cx="93" cy="58" r="1.3"/><circle cx="101" cy="59" r="1.3"/><circle cx="107" cy="63" r="1.3"/><circle cx="90" cy="64" r="1.3"/></g><path d="M84 70v8M90 72v6M100 72v6M106 70v8" stroke="${b}" stroke-width="3" stroke-linecap="round"/><path d="M84 78v1M106 78v1" stroke="#222" stroke-width="3"/><rect x="91" y="44" width="8" height="14" fill="${b}"/><ellipse cx="95" cy="44" rx="7.5" ry="9" fill="${b}" stroke="${dk}"/><ellipse cx="84" cy="38" rx="6" ry="3" fill="${b}" stroke="${dk}" transform="rotate(-25 84 38)"/><ellipse cx="106" cy="38" rx="6" ry="3" fill="${b}" stroke="${dk}" transform="rotate(25 106 38)"/><ellipse cx="95" cy="50" rx="4" ry="4.2" fill="#f6ead2"/><ellipse cx="95" cy="52" rx="2.2" ry="1.6" fill="#222"/>${e2(91,42,1.7)}${e2(99,42,1.7)}`;
+ if(t==13){let sp="M";for(let i=0;i<=16;i++){const a=Math.PI*(1+i/16),r=i%2?17:14;sp+=`${(95+r*Math.cos(a)*1.05).toFixed(1)} ${(68+r*Math.sin(a)*.95).toFixed(1)}L`}
+  return `<path d="${sp.slice(0,-1)}z" fill="${b}" stroke="#0004"/><ellipse cx="95" cy="68" rx="14" ry="9" fill="${b}"/><ellipse cx="95" cy="68" rx="14" ry="9" fill="#000" opacity=".25"/><path d="M84 62l3-4M92 58l1-5M100 58l-1-5M106 62l-3-4" stroke="#0005" stroke-width="1"/><ellipse cx="86" cy="76" rx="4" ry="2.4" fill="#e8cfa8" stroke="${dk}"/><ellipse cx="104" cy="76" rx="4" ry="2.4" fill="#e8cfa8" stroke="${dk}"/><circle cx="86" cy="58" r="3" fill="#e8cfa8"/><circle cx="104" cy="58" r="3" fill="#e8cfa8"/><path d="M83 66q0-12 12-12t12 12q0 9-12 10-12-1-12-10z" fill="#e8cfa8" stroke="${dk}"/>${e2(90,62,1.7)}${e2(100,62,1.7)}<ellipse cx="95" cy="68" rx="2.4" ry="1.9" fill="#222"/><path d="M93 71q2 1.5 4 0" stroke="#222" fill="none" stroke-width=".7"/>`}
+ return ""}
+function wander(){clearTimeout(hTimer);const el=$("hpet");
+ if(el&&!$("home").classList.contains("hide")){const fl=FLY.includes(Math.abs(+profile.pet.type||0)%17),nx=14+Math.random()*58,ny=fl&&Math.random()<.75?10+Math.random()*27:7.8,dir=nx>hpx.x?1:-1,pb=el.querySelector(".pb"),c=fl?"fly":"walk",d=Math.hypot(nx-hpx.x,(ny-hpx.y)*1.2)*(fl?.06:.09)+.5;
+  el.querySelector(".pf").style.transform=`scaleX(${dir})`;pb.classList.add(c);el.style.transitionDuration=d+"s";el.style.left=nx+"%";el.style.bottom=ny+"%";hpx.x=nx;hpx.y=ny;setTimeout(()=>pb.classList.remove(c),d*1000)}
+ hTimer=setTimeout(wander,2500+Math.random()*3500)}
+/*SEASONS*/
+const leafTree=(x,pal,n,buds)=>{let o=`<g transform="translate(${x},0)"><rect x="-3" y="268" width="6" height="38" fill="#6b4a32"/><path d="M0 270l-12-16M0 270l12-16M0 268v-24M-8 258l-6-8M8 258l6-8" stroke="#6b4a32" stroke-width="2"/>`;
+ const B=[[0,-8,14],[-12,0,11],[12,0,11],[-6,-20,11],[8,-18,11],[0,-30,9],[-16,12,9],[16,12,9],[0,8,10]];
+ B.slice(0,n).forEach(([dx,dy,r],i)=>o+=`<circle cx="${dx}" cy="${262+dy}" r="${r}" fill="${pal[i%pal.length]}"/>`);
+ if(buds)B.forEach(([dx,dy])=>o+=`<circle cx="${dx*1.1}" cy="${256+dy}" r="2.2" fill="#8fcf6a"/>`);return o+"</g>"};
+const pineT=x=>`<g transform="translate(${x-24},0)"><path d="M24 306l-18 0 18-46 18 46zM24 280l-14 0 14-36 14 36z" fill="#2f6b4a"/><path d="M24 244l-5 10h10z" fill="#fff"/></g>`;
+const tw=(x,y,c,r,i)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"><animate attributeName="opacity" values="1;.3;1" dur="${1+i%3*.5}s" repeatCount="indefinite"/></circle>`;
+const LC=["#e0483d","#f5d442","#4fae77","#3b6fd4"];
+const cloud=(x,y,c)=>`<g fill="${c}" opacity=".9"><animateTransform attributeName="transform" type="translate" values="0 0;30 0;0 0" dur="${25+x%10}s" repeatCount="indefinite"/><ellipse cx="${x}" cy="${y}" rx="22" ry="8"/><ellipse cx="${x+12}" cy="${y-6}" rx="14" ry="8"/><ellipse cx="${x-12}" cy="${y-4}" rx="12" ry="7"/></g>`;
+const sun=r=>`<g transform="translate(350,48)"><g><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="30s" repeatCount="indefinite"/>${Array.from({length:12},(_,k)=>`<path d="M0 ${-(r+4)}v-6" stroke="#ffd54a" stroke-width="2.5" stroke-linecap="round" transform="rotate(${k*30})"/>`).join("")}</g><circle r="${r}" fill="#ffd54a"/></g>`;
+const fw=(x,y,c,b)=>`<g transform="translate(${x},${y})"><g><animateTransform attributeName="transform" type="scale" from=".1" to="1" dur="2.4s" begin="${b}s" repeatCount="indefinite"/><animate attributeName="opacity" from="1" to="0" dur="2.4s" begin="${b}s" repeatCount="indefinite"/>${Array.from({length:12},(_,k)=>`<circle cx="${Math.round(24*Math.cos(k*Math.PI/6))}" cy="${Math.round(24*Math.sin(k*Math.PI/6))}" r="2" fill="${c}"/>`).join("")}</g></g>`;
+const ghostI=`<path d="M0 0a10 10 0 0120 0v20l-4-4-3 4-3-4-3 4-3-4-4 4z" fill="#fff" opacity=".92"/><circle cx="6" cy="8" r="1.8" fill="#222"/><circle cx="14" cy="8" r="1.8" fill="#222"/><ellipse cx="10" cy="14" rx="2" ry="2.5" fill="#222"/>`;
+const ghost=(x,y,d)=>`<g transform="translate(${x},${y})"><g><animateTransform attributeName="transform" type="translate" values="0 0;6 -10;0 0;-6 -6;0 0" dur="${d}s" repeatCount="indefinite"/>${ghostI}</g></g>`;
+const pump=(x,y,s)=>`<g transform="translate(${x},${y}) scale(${s})"><ellipse rx="9" ry="7.5" fill="#f08a24"/><ellipse rx="4" ry="7.5" fill="#e0701c" opacity=".6"/><rect x="-1" y="-11" width="2.5" height="4" fill="#4a7a2a"/><path d="M-5-2l2-3 2 3zM1-2l2-3 2 3zM-4 2q4 4 8 0" fill="#ffd34d"/></g>`;
+const T=o=>Object.assign({w:"",gr:"#f7fafc",sky:["#a9cde6","#e6f1f8"],ink:"#16324a",win:"#bfe0f2",em:""},o);
+const GR=["#2f9e44","#3aa94c","#278a3a"],P0=["#e0a02b","#e08a2e","#c9a13a"],P1=["#d9561f","#e8892b","#c0392b","#e0a02b"],P2=["#a8672a","#c9a13a","#8a5a2a","#b9852f"];
+const SUM=T({sky:["#4fb4f0","#cdeaff"],gr:"#5db04d",em:"☀️",tr:[GR,9,0],sun:18,cl:"#fff",nosmoke:1,fl:[32,["#f6e27a","#e85d8f","#fff"],0]});
+const CFG=[T({w:"snow",sky:["#0b1530","#27407a"],ink:"#fff",win:"#ffe9a8",em:"🎆",fw:1,pine:1,roofS:1}),
+ T({w:"sleet",sky:["#8fa3b3","#d6e0e8"],gr:"#e3eaee",em:"🌨",roofS:1,cl:"#c5ced6"}),
+ T({sky:["#bfe0f5","#eaf6fb"],gr:"#cfe0a8",em:"🌱",tr:[["#9bc86a"],0,1],sun:10,cl:"#fff",fl:[6,["#fff","#f6e27a"],0]}),
+ T({sky:["#9ad4f5","#e8f6fd"],gr:"#a8d878",em:"🌸",tr:[["#8fd06a","#f4b6c8","#a5d97c"],6,0],sun:12,cl:"#fff",fl:[16,["#f4b6c8","#fff","#f6e27a"],0]}),
+ T({sky:["#8fd0f5","#e3f5fd"],gr:"#7fc95f",em:"🌷",tr:[["#58b24c","#6cc35a","#4aa043"],9,0],sun:14,cl:"#fff",fl:[28,["#e85d8f","#f6e27a","#fff","#7b4bd1"],0]}),
+ SUM,SUM,SUM,
+ T({sky:["#a9cfe8","#f2e6c8"],gr:"#9fc65a",em:"🍂",tr:[["#4f9a4a","#5aa84f","#4f9a4a","#e0a02b"],9,0],fall:P0,roofL:[P0,5],cl:"#fff",fl:[14,P0,1]}),
+ T({sky:["#4a2c5a","#f0a15a"],ink:"#fff",gr:"#a59a45",win:"#ffe9a8",em:"🎃",tr:[P1,9,0],fall:P1,roofL:[P1,16],gh:1,fl:[34,P1,1]}),
+ T({w:"rain",sky:["#7d8b97","#c4ced6"],gr:"#8f8a4a",em:"🌧",tr:[P2,5,0],fall:P2,roofL:[P2,16],cl:"#aab4bd",fl:[48,P2,1]}),
+ T({w:"snow",sky:["#2a3f6b","#8fa6c9"],ink:"#fff",win:"#ffe9a8",em:"🎄",xm:1,roofS:1})];
+function weather(S){const w=S.w;let o="";
+ if(w==="snow"||w==="sleet")o+=Array.from({length:w==="snow"?18:10},(_,i)=>`<circle cx="${(i*23+10)%400}" r="${1.5+i%3*.7}" fill="#fff"><animate attributeName="cy" from="-10" to="345" dur="${6+i%5*1.5}s" begin="-${i*.7}s" repeatCount="indefinite"/></circle>`).join("");
+ if(w==="rain"||w==="sleet")o+=Array.from({length:w==="rain"?28:16},(_,i)=>`<path d="M${(i*29+7)%400} 0l-3 10" stroke="${w==="rain"?"#5f86a8":"#8aa4b8"}" stroke-width="1.3"><animateTransform attributeName="transform" type="translate" from="0 -20" to="-18 350" dur="${.9+i%4*.15}s" begin="-${i*.13}s" repeatCount="indefinite"/></path>`).join("");
+ if(S.fall)o+=Array.from({length:10},(_,i)=>{const x=(i*41+15)%400;return `<ellipse rx="3.5" ry="2" fill="${S.fall[i%S.fall.length]}"><animate attributeName="cy" from="-10" to="335" dur="${7+i%4*2}s" begin="-${i*1.1}s" repeatCount="indefinite"/><animate attributeName="cx" values="${x};${x+20};${x}" dur="${3+i%3}s" repeatCount="indefinite"/></ellipse>`}).join("");
+ return o}
+function season(m){const c=CFG[m],S=Object.assign({},c),
+ dots=(n,pal,leaf)=>Array.from({length:n},(_,i)=>{const x=(i*37+13)%400,y=329+(i*7)%9;return leaf?`<ellipse cx="${x}" cy="${y}" rx="4" ry="2" fill="${pal[i%pal.length]}" transform="rotate(${i*40%90} ${x} ${y})"/>`:`<circle cx="${x}" cy="${y}" r="2.2" fill="${pal[i%pal.length]}"/>`}).join("");
+ S.gdots=c.fl?dots(...c.fl):"";
+ const xt=`<g transform="translate(376,0)"><path d="M0 306h-26l26-52 26 52zM0 276h-21l21-46 21 46zM0 246h-16l16-40 16 40z" fill="#2a7d4f"/><path d="M0 198l2 5h5l-4 3 1 5-4-3-4 3 1-5-4-3h5z" fill="#ffd34d"/>${[[-10,296],[12,298],[-4,270],[9,268],[0,242],[-9,262]].map(([x,y],i)=>tw(x,y,LC[i%4],3,i)).join("")}</g>`;
+ S.treeL=c.tr?leafTree(20,...c.tr):pineT(24)+(c.xm?[[24,262],[16,276],[32,270],[24,246],[14,292],[34,288]].map(([x,y],i)=>tw(x,y,LC[i%4],2.4,i)).join(""):"");
+ S.treeR=c.tr?leafTree(380,...c.tr):c.xm?xt:pineT(376);
+ S.bgx=(c.cl?[[60,48],[170,20],[310,78]].map(([x,y])=>cloud(x,y,c.cl)).join(""):"")+(c.sun?sun(c.sun):"")+(c.fw?fw(75,85,"#ffd34d",0)+fw(335,70,"#ff6b9a",.8)+fw(200,24,"#6bd0ff",1.6):"");
+ const LP=[[70,128],[100,112],[130,95],[160,75],[190,55],[235,66],[260,84],[290,100],[320,118],[345,133],[110,132],[260,128],[310,134],[60,138],[200,95],[150,110]];
+ S.roof=c.roofS?`<path d="M28 144L200 36 372 144 352 144 200 60 48 144z" fill="#fff"/><ellipse cx="200" cy="38" rx="12" ry="4" fill="#fff"/>${[70,140,260,330].map(x=>`<ellipse cx="${x}" cy="145" rx="20" ry="6" fill="#fff"/>`).join("")}`:c.roofL?LP.slice(0,c.roofL[1]).map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="5" ry="2.5" fill="${c.roofL[0][i%c.roofL[0].length]}" transform="rotate(${i*47%90-45} ${x} ${y})"/>`).join(""):"";
+ S.extra=(c.xm?`<path d="M28 147L200 39 372 147" stroke="#333" fill="none" stroke-width=".8"/>`+Array.from({length:20},(_,i)=>{const t=(i%10)/9;return tw(i<10?28+172*t:372-172*t,144-108*t+3,LC[i%4],3,i)}).join(""):"")
+  +(c.gh?pump(80,334,1)+pump(320,333,1.1)+pump(112,337,.8)+ghost(8,110,4)+ghost(372,170,5)+`<g><animateTransform attributeName="transform" type="translate" values="30 55;320 70;30 55" dur="18s" repeatCount="indefinite"/>${ghostI}</g>`:"");
+ return S}
+/*END*/
+async function renderHome(){const p=profile,last=items.slice(-6),px8=await Promise.all(last.map(pix));
+ const tiles=[0,1,2,3,4,5].map(k=>{const x=240+(k%3)*32,y=180+Math.floor(k/3)*32,it=last[k];
+  return `<rect x="${x}" y="${y}" width="26" height="26" fill="#f6f1e6" stroke="#0002"/>`+(it?`<image href="${px8[k]}" x="${x}" y="${y}" width="26" height="26" preserveAspectRatio="none" style="image-rendering:pixelated"/>`:`<text x="${x+13}" y="${y+18}" font-size="14" text-anchor="middle" fill="#0004">?</text>`)+`<circle cx="${x+13}" cy="${y-1}" r="2" fill="#c8372d"/>`}).join("");
+ const S=season(new Date().getMonth()),snow=weather(S),EI=eggInfo(),eggSVG=eggDraw(EI);setLv(EI);
+ const smoke=S.nosmoke?"":[0,1,2].map(k=>`<circle cx="300" cy="50" r="5" fill="#fff" opacity=".7"><animate attributeName="cy" from="50" to="8" dur="3s" begin="-${k}s" repeatCount="indefinite"/><animate attributeName="r" from="5" to="12" dur="3s" begin="-${k}s" repeatCount="indefinite"/><animate attributeName="opacity" from=".7" to="0" dur="3s" begin="-${k}s" repeatCount="indefinite"/></circle>`).join("");
+ const dots=[[90,160,"#e0483d"],[127,152,"#f5d442"],[163,160,"#4fae77"],[200,152,"#3b6fd4"],[236,160,"#e0483d"],[273,152,"#f5d442"],[310,160,"#4fae77"]].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="3" fill="${c}"><animate attributeName="opacity" values="1;.4;1" dur="${1.5+x%3*.4}s" repeatCount="indefinite"/></circle>`).join("");
+ $("scene").innerHTML=`<svg class="bg" viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">${S.bgx}${snow}<path d="M0 306q100-14 200-4t200-2v40H0z" fill="${S.gr}"/>${S.gdots}${S.treeL}${S.treeR}
+<rect x="285" y="58" width="30" height="60" fill="#8a5a44"/><path d="M285 74h30M285 90h30M300 58v16M292 74v16M308 90v16" stroke="#0003"/><ellipse cx="300" cy="58" rx="19" ry="5" fill="#fff"/>${smoke}
+<rect x="50" y="142" width="300" height="176" fill="#ead7b5"/><rect x="50" y="250" width="300" height="40" fill="#d6b48a"/><rect x="50" y="290" width="300" height="28" fill="#a8774a"/><path d="M50 250h300" stroke="#0002"/><path d="M50 298h300M50 306h300" stroke="#0003"/><ellipse cx="200" cy="304" rx="72" ry="7" fill="${p.accent}" opacity=".6"/>
+<path d="M54 152q37 16 73 0t73 0 73 0 73 0" stroke="#554" fill="none"/>${dots}
+<rect x="165" y="176" width="60" height="58" fill="${S.win}" stroke="#6b4a32" stroke-width="5"/><path d="M195 176v58M165 205h60" stroke="#6b4a32" stroke-width="3"/><g fill="#fff"><circle cx="175" cy="188" r="1.6"/><circle cx="207" cy="196" r="1.6"/><circle cx="182" cy="220" r="1.6"/><circle cx="214" cy="223" r="1.6"/></g><rect x="160" y="234" width="70" height="5" fill="#fff"/>
+<rect x="70" y="222" width="64" height="68" fill="#8d8d93"/><path d="M70 238h64M70 256h64M70 272h64M90 222v16M112 238v18M90 256v16M112 272v18" stroke="#0003"/><rect x="62" y="212" width="80" height="10" fill="#6b4a32"/><rect x="84" y="244" width="32" height="46" fill="#2a1d1a"/><circle class="fl" cx="100" cy="270" r="44" fill="#ffb347" opacity=".18"/><rect x="88" y="281" width="24" height="7" rx="3" fill="#6b3f1f"/><path class="fl" d="M90 282q-8-18 10-32 18 14 10 32z" fill="#f08a24"/><path class="fl" d="M95 282q-4-11 5-20 9 9 5 20z" fill="#ffd34d"/>
+${eggSVG}${bonusDraw()}<g id="board" style="cursor:pointer"><rect x="234" y="156" width="104" height="108" rx="4" fill="#c79a5b" stroke="#6b4a32" stroke-width="4"/><text x="286" y="171" font-size="9" font-weight="700" text-anchor="middle" fill="#4a2f1c">POKÉDEX</text>${tiles}<text x="286" y="257" font-size="8" text-anchor="middle" fill="#4a2f1c">${items.length} species · tap!</text></g>
+<rect x="50" y="142" width="300" height="176" fill="none" stroke="#6b4a32" stroke-width="8"/><ellipse cx="200" cy="320" rx="165" ry="9" fill="${S.gr}"/>
+<path d="M28 144L200 36 372 144z" fill="${p.banner}"/>${S.roof}${S.extra}</svg>
+<div class="hav">${ava(p.av,null,false)}</div><div class="hpet" id="hpet" style="left:${hpx.x}%;bottom:${(hpx.y=FLY.includes(Math.abs(+p.pet.type||0)%17)?hpx.y:7.8)}%"><div class="pf"><div class="pb"><svg viewBox="76 16 48 64">${petSVG(p.pet)}</svg></div></div></div>`;
+ $("htt").textContent=p.name?`${p.name}’s cabin`:"Welcome to your cabin";$("htt").textContent+=" "+S.em;$("home").style.background=`linear-gradient(${S.sky[0]},${S.sky[1]})`;$("home").style.setProperty("--hi",S.ink);$("hmute").textContent=p.mute?"🔇":"🔊";wander()}
+function showPokedex(){$("home").classList.add("hide");$("garden").classList.add("hide");scrollTo(0,0)}
+function showHome(){$("garden").classList.add("hide");$("home").classList.remove("hide");renderHome()}
+$("scene").onclick=e=>{if(e.target.closest("#board")){showPokedex();return}
+ if(e.target.closest("#egg2")){const n=Math.min(...(profile.beggs||[]).filter(f=>f+5>profile.hi).map(f=>f+5-profile.hi));sayAt(`🌟 Bonus egg: ${n} more sighting${n>1?"s":""}!`,29.5);return}
+ if(e.target.closest("#egg")){const E=eggInfo();sayAt(E.found?`🥚 Hatches after ${E.left} more sighting${E.left>1?"s":""}!`:"🥚");return}
+ const p=e.target.closest(".hpet"),a=e.target.closest(".hav");
+ if(p){const t=Math.abs(+profile.pet.type||0)%17;hop(p.querySelector(".pb"));play(t);say(p,TXT[t])}
+ else if(a){hop(a);say(a,LINES[Math.floor(Math.random()*LINES.length)])}};
+$("hopen").onclick=showPokedex;$("homebtn").onclick=showHome;$("hadd").onclick=()=>$("add").click();$("hcu").onclick=()=>$("cubtn").click();$("hfr").onclick=()=>$("frbtn").click();$("hbk").onclick=()=>$("bkbtn").click();
+$("hmute").onclick=()=>{profile.mute=!profile.mute;saveProfile();$("hmute").textContent=profile.mute?"🔇":"🔊"};
+
+openDB().then(loadAll).then(r=>{items=r.filter(o=>typeof o.id==="number").sort((a,b)=>a.id-b.id);friends=r.filter(o=>typeof o.id==="string"&&o.id.startsWith("f:"));
+ profile=Object.assign(defProfile(),r.find(o=>o.id==="profile")||{});profile.hi=Math.max(profile.hi||0,items.length);if(!isOpen(profile.pet.type)){profile.pet.type=6;profile.pet.color=NAT[6]}ensureUid();saveProfile();applyProfile();render()});
+</script>
+</body>
+</html>
